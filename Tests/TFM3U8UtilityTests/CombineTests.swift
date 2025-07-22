@@ -96,7 +96,7 @@ final class CombineTests: XCTestCase, @unchecked Sendable {
         // Verify each test file exists and has content
         for fileName in tsFiles.prefix(5) {
             let filePath = "\(testDataPath)/\(fileName)"
-            let fileSize = try FileManager.default.attributesOfItem(atPath: filePath)[.size] as! UInt64
+            let fileSize = try FileManager.default.attributesOfItem(atPath: filePath)[.size] as? UInt64 ?? 0
             XCTAssertGreaterThan(fileSize, 0, "Test file size should be greater than 0")
         }
 
@@ -130,9 +130,9 @@ final class CombineTests: XCTestCase, @unchecked Sendable {
         
         // Copy test files to input directory
         let fileCount = min(5, tsFiles.count)
-        for i in 0..<fileCount {
-            let sourceFile = URL(fileURLWithPath: "\(testDataPath)/fileSequence\(i).ts")
-            let targetFile = inputDirectory.appendingPathComponent("fileSequence\(i).ts")
+        for index in 0..<fileCount {
+            let sourceFile = URL(fileURLWithPath: "\(testDataPath)/fileSequence\(index).ts")
+            let targetFile = inputDirectory.appendingPathComponent("fileSequence\(index).ts")
             try fileSystem.copyItem(at: sourceFile, to: targetFile)
         }
 
@@ -148,7 +148,7 @@ final class CombineTests: XCTestCase, @unchecked Sendable {
             
             // Verify output file size
             let attributes = try FileManager.default.attributesOfItem(atPath: outputFile.path)
-            let fileSize = attributes[.size] as! UInt64
+            let fileSize = attributes[.size] as? UInt64 ?? 0
             XCTAssertGreaterThan(fileSize, 0, "Output file size should be greater than 0")
             
             print("✅ Video segment combination test passed, output file size: \(fileSize) bytes")

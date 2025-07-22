@@ -6,22 +6,22 @@ disabled_rules:
   - file_length
   - cyclomatic_complexity
   - type_name
-  - force_unwrapping
-  - force_cast
-  - force_try
-  - implicitly_unwrapped_optional
-  - inclusive_language
-  - identifier_name
-  - for_where
   - trailing_comma
-  - non_optional_string_data_conversion
+  - inclusive_language  # 禁用包容性语言检查，因为 M3U8 标准使用 "master" 术语
 
 opt_in_rules:
   - empty_count
+  - force_unwrapping
+  - implicitly_unwrapped_optional
   - overridden_super_call
   - redundant_nil_coalescing
   - sorted_imports
   - vertical_parameter_alignment_on_call
+  - force_cast
+  - force_try
+  - identifier_name
+  - for_where
+  - non_optional_string_data_conversion
 
 included:
   - Sources

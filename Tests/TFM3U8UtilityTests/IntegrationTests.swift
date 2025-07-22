@@ -195,8 +195,8 @@ final class IntegrationTests: XCTestCase {
         
         // Test URL creation performance
         let urlStartTime = CFAbsoluteTimeGetCurrent()
-        for i in 0..<iterations {
-            _ = URL(string: "https://example.com/test\(i).m3u8")
+        for index in 0..<iterations {
+            _ = URL(string: "https://example.com/test\(index).m3u8")
         }
         let urlTime = CFAbsoluteTimeGetCurrent() - urlStartTime
         
@@ -236,8 +236,8 @@ final class IntegrationTests: XCTestCase {
         
         // Test array and collection memory usage
         var urls: [URL] = []
-        for i in 0..<100 {
-            let url = URL(string: "https://example.com/test\(i).m3u8")!
+        for index in 0..<100 {
+            let url = URL(string: "https://example.com/test\(index).m3u8")!
             urls.append(url)
         }
         

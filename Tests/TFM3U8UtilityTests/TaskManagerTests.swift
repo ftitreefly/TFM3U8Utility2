@@ -91,7 +91,7 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
         let expectedContent = createMockM3U8Content()
         
         mockDownloader.mockContentResults[url] = expectedContent
-        mockParser.mockParseResults[expectedContent] = .media(createMockMediaPlaylist())
+        mockParser.mockParseResults[expectedContent] = .media(try createMockMediaPlaylist())
         mockFileSystem.mockTempDirectory = tempDirectory
         
         // When & Then - This test will fail due to real network calls
@@ -121,7 +121,7 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
         let expectedContent = createMockM3U8Content()
         try expectedContent.write(to: localM3U8Path, atomically: true, encoding: .utf8)
         
-        mockParser.mockParseResults[expectedContent] = .media(createMockMediaPlaylist())
+        mockParser.mockParseResults[expectedContent] = .media(try createMockMediaPlaylist())
         mockFileSystem.mockTempDirectory = tempDirectory
         
         // When & Then - This test will also fail due to real network calls for segments
@@ -183,7 +183,7 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
         mockDownloader.mockContentResults[url2] = expectedContent
         mockDownloader.mockContentResults[url3] = expectedContent
         
-        mockParser.mockParseResults[expectedContent] = .media(createMockMediaPlaylist())
+        mockParser.mockParseResults[expectedContent] = .media(try createMockMediaPlaylist())
         mockFileSystem.mockTempDirectory = tempDirectory
         
         // Make download slow to test concurrency limits
@@ -308,7 +308,7 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
         let expectedContent = createMockM3U8Content()
         
         mockDownloader.mockContentResults[url] = expectedContent
-        mockParser.mockParseResults[expectedContent] = .media(createMockMediaPlaylist())
+        mockParser.mockParseResults[expectedContent] = .media(try createMockMediaPlaylist())
         mockFileSystem.mockTempDirectory = tempDirectory
         
         // When
@@ -368,7 +368,7 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
         let expectedContent = createMockM3U8Content()
         
         mockDownloader.mockContentResults[url] = expectedContent
-        mockParser.mockParseResults[expectedContent] = .media(createMockMediaPlaylist())
+        mockParser.mockParseResults[expectedContent] = .media(try createMockMediaPlaylist())
         mockFileSystem.mockTempDirectory = tempDirectory
         
         guard let optimizedManager = taskManager as? OptimizedTaskManager else {
@@ -421,19 +421,19 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
         """
     }
     
-    private func createMockMediaPlaylist() -> MediaPlaylist {
+    private func createMockMediaPlaylist() throws -> MediaPlaylist {
         let baseUrl = URL(string: "https://example.com/")!
         
         // Create mock EXTINF tags
-        let extinf1 = try! EXTINF(text: "#EXTINF:10.0,\nsegment1.ts", tagType: EXTINF.self, extraParams: nil)
-        let extinf2 = try! EXTINF(text: "#EXTINF:10.0,\nsegment2.ts", tagType: EXTINF.self, extraParams: nil)
-        let extinf3 = try! EXTINF(text: "#EXTINF:10.0,\nsegment3.ts", tagType: EXTINF.self, extraParams: nil)
+        let extinf1 = try EXTINF(text: "#EXTINF:10.0,\nsegment1.ts", tagType: EXTINF.self, extraParams: nil)
+        let extinf2 = try EXTINF(text: "#EXTINF:10.0,\nsegment2.ts", tagType: EXTINF.self, extraParams: nil)
+        let extinf3 = try EXTINF(text: "#EXTINF:10.0,\nsegment3.ts", tagType: EXTINF.self, extraParams: nil)
         
         // Create required tag objects
-        let targetDuration = try! EXT_X_TARGETDURATION(text: "#EXT-X-TARGETDURATION:10", tagType: EXT_X_TARGETDURATION.self, extraParams: nil)
-        let version = try! EXT_X_VERSION(text: "#EXT-X-VERSION:3", tagType: EXT_X_VERSION.self, extraParams: nil)
-        let mediaSequence = try! EXT_X_MEDIA_SEQUENCE(text: "#EXT-X-MEDIA-SEQUENCE:0", tagType: EXT_X_MEDIA_SEQUENCE.self, extraParams: nil)
-        let endList = try! EXT_X_ENDLIST(text: "#EXT-X-ENDLIST", tagType: EXT_X_ENDLIST.self, extraParams: nil)
+        let targetDuration = try EXT_X_TARGETDURATION(text: "#EXT-X-TARGETDURATION:10", tagType: EXT_X_TARGETDURATION.self, extraParams: nil)
+        let version = try EXT_X_VERSION(text: "#EXT-X-VERSION:3", tagType: EXT_X_VERSION.self, extraParams: nil)
+        let mediaSequence = try EXT_X_MEDIA_SEQUENCE(text: "#EXT-X-MEDIA-SEQUENCE:0", tagType: EXT_X_MEDIA_SEQUENCE.self, extraParams: nil)
+        let endList = try EXT_X_ENDLIST(text: "#EXT-X-ENDLIST", tagType: EXT_X_ENDLIST.self, extraParams: nil)
         
         let tags = MediaPlaylistTags(
             targetDurationTag: targetDuration,

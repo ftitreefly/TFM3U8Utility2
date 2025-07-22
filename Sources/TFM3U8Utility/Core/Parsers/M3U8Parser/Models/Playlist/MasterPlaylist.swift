@@ -27,8 +27,6 @@
 
 import Foundation
 
-// swiftlint:disable all
-
 /// `MasterPlaylist` represents a master playlist with all the master playlist tags.
 public struct MasterPlaylist: Playlist {
     /// The base url of the playlist.
@@ -55,5 +53,3 @@ class MasterPlaylistTagsBuilder {
         return MasterPlaylistTags(versionTag: self.versionTag, mediaTags: self.mediaTags, streamTags: self.streamTags)
     }
 }
-
-// swiftlint:enable all

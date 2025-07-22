@@ -104,11 +104,7 @@ public class EXTINF: BaseValueTag<Double>, MultilineTag, @unchecked Sendable {
     public required init(text: String, tagType: any Tag.Type, extraParams: [String: Any]?) throws {
         // extinf tag has multi lines
         let lines = text.components(separatedBy: .newlines)
-        
-        
-        
-        
-        
+
         let linesCount = EXTINF.linesCount(for: text)
         guard lines.count == linesCount else { throw TagError.invalidData(tag: tagType.tag, received: "more/less than \(linesCount) lines of data", expected: "exactly \(linesCount) lines of data") }
         if linesCount == 3 {
