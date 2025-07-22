@@ -89,12 +89,7 @@ public struct OptimizedVideoProcessor: VideoProcessorProtocol {
         let segmentFiles = try await findSegmentFiles(in: directory)
         
         guard !segmentFiles.isEmpty else {
-            throw ProcessingError(
-                code: 4007,
-                underlyingError: nil,
-                message: "No segment files found",
-                operation: "combine"
-            )
+            throw ProcessingError.noValidSegments()
         }
         
         // Create concat file with optimized I/O
@@ -104,12 +99,7 @@ public struct OptimizedVideoProcessor: VideoProcessorProtocol {
         let arguments = buildOptimizedFFmpegArguments(concatFile: concatFile, outputFile: outputFile)
         
         guard let ffmpegCommand = configuration.ffmpegPath else {
-            throw ProcessingError(
-                code: 4008,
-                underlyingError: nil,
-                message: "FFmpeg command not found",
-                operation: "decrypt"
-            )
+            throw ProcessingError.ffmpegNotFound()
         }
 
         _ = try await commandExecutor.execute(
@@ -149,12 +139,7 @@ public struct OptimizedVideoProcessor: VideoProcessorProtocol {
     /// ```
     public func decryptSegment(at url: URL, to outputURL: URL, keyURL: URL?) async throws {
         guard let ffmpegCommand = configuration.ffmpegPath else {
-            throw ProcessingError(
-                code: 4008,
-                underlyingError: nil,
-                message: "FFmpeg command not found",
-                operation: "decrypt"
-            )
+            throw ProcessingError.ffmpegNotFound()
         }
         
         var arguments = [

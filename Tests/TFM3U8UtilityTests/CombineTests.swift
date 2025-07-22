@@ -36,7 +36,7 @@ final class CombineTests: XCTestCase, @unchecked Sendable {
             return
         }
         
-        print("📁 Test temporary directory: \(tempDirectory.path)")
+        // Test temporary directory created
     }
 
     override func tearDown() {
@@ -53,7 +53,7 @@ final class CombineTests: XCTestCase, @unchecked Sendable {
 
     /// Download test ts segments from network
     private func downloadTestSegments(count: Int = 3) async throws -> URL {
-        print("🌐 Downloading \(count) test ts segments from network...")
+        // Downloading \(count) test ts segments from network
         
         // Use Apple's public test stream segments
         let segmentBaseURL = "https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/gear1/"
@@ -81,12 +81,7 @@ final class CombineTests: XCTestCase, @unchecked Sendable {
         let files = try fileSystem.contentsOfDirectory(at: segmentsDirectory)
         XCTAssertGreaterThanOrEqual(files.count, count, "Should have downloaded at least \(count) files")
         
-        print("✅ Successfully downloaded \(files.count) ts segments")
-        for file in files {
-            let attributes = try FileManager.default.attributesOfItem(atPath: file.path)
-            let fileSize = attributes[.size] as? UInt64 ?? 0
-            print("   File: \(file.lastPathComponent), size: \(fileSize) bytes")
-        }
+        // Successfully downloaded \(files.count) ts segments
         
         return segmentsDirectory
     }
@@ -103,12 +98,12 @@ final class CombineTests: XCTestCase, @unchecked Sendable {
             return
         }
 
-        print("✅ OptimizedVideoProcessor basic functionality verification passed")
+        // OptimizedVideoProcessor basic functionality verification passed
     }
 
     /// Test video segment combination functionality with 1 segment
     func testCombineSingleSegment() async throws {
-        print("🔗 Starting single segment combination test...")
+        // Starting single segment combination test
 
         // Download 1 test segment
         let segmentsDirectory = try await downloadTestSegments(count: 1)
@@ -126,17 +121,16 @@ final class CombineTests: XCTestCase, @unchecked Sendable {
             let fileSize = attributes[.size] as? UInt64 ?? 0
             XCTAssertGreaterThan(fileSize, 0, "Output file size should be greater than 0")
             
-            print("✅ Single segment combination test passed, output file size: \(fileSize) bytes")
+            // Single segment combination test passed
         } catch {
             // In environments without FFmpeg, this test may fail
-            print("⚠️  Single segment combination test failed (possibly due to FFmpeg unavailability): \(error)")
             throw XCTSkip("Skipping single segment combination test: FFmpeg may be unavailable")
         }
     }
 
     /// Test video segment combination functionality with 2 segments
     func testCombineTwoSegments() async throws {
-        print("🔗 Starting two segments combination test...")
+        // Starting two segments combination test
 
         // Download 2 test segments
         let segmentsDirectory = try await downloadTestSegments(count: 2)
@@ -154,17 +148,16 @@ final class CombineTests: XCTestCase, @unchecked Sendable {
             let fileSize = attributes[.size] as? UInt64 ?? 0
             XCTAssertGreaterThan(fileSize, 0, "Output file size should be greater than 0")
             
-            print("✅ Two segments combination test passed, output file size: \(fileSize) bytes")
+            // Two segments combination test passed
         } catch {
             // In environments without FFmpeg, this test may fail
-            print("⚠️  Two segments combination test failed (possibly due to FFmpeg unavailability): \(error)")
             throw XCTSkip("Skipping two segments combination test: FFmpeg may be unavailable")
         }
     }
 
     /// Test video segment combination functionality with 3 segments
     func testCombineThreeSegments() async throws {
-        print("🔗 Starting three segments combination test...")
+        // Starting three segments combination test
 
         // Download 3 test segments
         let segmentsDirectory = try await downloadTestSegments(count: 3)
@@ -182,17 +175,16 @@ final class CombineTests: XCTestCase, @unchecked Sendable {
             let fileSize = attributes[.size] as? UInt64 ?? 0
             XCTAssertGreaterThan(fileSize, 0, "Output file size should be greater than 0")
             
-            print("✅ Three segments combination test passed, output file size: \(fileSize) bytes")
+            // Three segments combination test passed
         } catch {
             // In environments without FFmpeg, this test may fail
-            print("⚠️  Three segments combination test failed (possibly due to FFmpeg unavailability): \(error)")
             throw XCTSkip("Skipping three segments combination test: FFmpeg may be unavailable")
         }
     }
 
     /// Test error handling with empty directory
     func testErrorHandlingEmptyDirectory() async throws {
-        print("🚨 Starting error handling test with empty directory...")
+        // Starting error handling test with empty directory
 
         // Test handling of empty directory
         let emptyDirectory = tempDirectory.appendingPathComponent("empty_segments")
@@ -204,14 +196,14 @@ final class CombineTests: XCTestCase, @unchecked Sendable {
             try await videoSystem.combineSegments(in: emptyDirectory, outputFile: outputFile)
             XCTFail("Should throw error because directory is empty")
         } catch {
-            print("✅ Error handling test passed, correctly caught error: \(error)")
+            // Error handling test passed
             XCTAssertTrue(error is ProcessingError, "Should throw ProcessingError type error")
         }
     }
 
     /// Test error handling with non-existent directory
     func testErrorHandlingNonExistentDirectory() async throws {
-        print("🚨 Starting error handling test with non-existent directory...")
+        // Starting error handling test with non-existent directory
 
         // Test handling of non-existent directory
         let nonExistentDirectory = tempDirectory.appendingPathComponent("non_existent_segments")
@@ -221,7 +213,7 @@ final class CombineTests: XCTestCase, @unchecked Sendable {
             try await videoSystem.combineSegments(in: nonExistentDirectory, outputFile: outputFile)
             XCTFail("Should throw error because directory does not exist")
         } catch {
-            print("✅ Error handling test passed, correctly caught error: \(error)")
+            // Error handling test passed
             // The error could be various types depending on the implementation
             // Just verify that an error was thrown
             XCTAssertTrue(true, "Error was correctly thrown for non-existent directory")

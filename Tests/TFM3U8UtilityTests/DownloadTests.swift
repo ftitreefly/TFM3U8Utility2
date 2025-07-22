@@ -42,7 +42,7 @@ final class DownloadTests: XCTestCase {
         
         httpSystem = testContainer.resolve(M3U8DownloaderProtocol.self)
         
-        print("📁 Test temporary directory: \(tempDirectory.path)")
+        // Test temporary directory created
     }
     
     override func tearDown() {
@@ -59,17 +59,11 @@ final class DownloadTests: XCTestCase {
     
     /// Test performance optimized configuration
     func testPerformanceOptimizedConfiguration() throws {
-        print("⚡ Starting performance optimization configuration verification...")
-
         XCTAssertNotNil(testContainer, "Test container should exist")
 
         let config = testContainer.resolve(DIConfiguration.self)
         XCTAssertGreaterThan(config.maxConcurrentDownloads, 8, "Performance optimization config should have higher concurrent downloads")
         XCTAssertGreaterThan(config.downloadTimeout, 0, "Download timeout should be greater than 0")
-
-        print("   Max concurrent downloads: \(config.maxConcurrentDownloads)")
-        print("   Download timeout: \(config.downloadTimeout) seconds")
-        print("✅ Performance optimization configuration verification passed")
     }
     
     func testDownloadContentFromValidURL() async throws {
@@ -84,7 +78,7 @@ final class DownloadTests: XCTestCase {
             XCTAssertFalse(content.isEmpty, "Downloaded content should not be empty")
             XCTAssertTrue(content.contains("fileSequence0.ts"), "Content should contain expected response")
             
-            print("✅ Successfully downloaded content, length: \(content.count) characters")
+            // Successfully downloaded content
         } catch {
             XCTFail("Download failed: \(error)")
         }
@@ -106,7 +100,7 @@ final class DownloadTests: XCTestCase {
                 || error.localizedDescription.contains("未能找到使用指定主机名的服务器")
                 || error.localizedDescription.contains("could not find server with specified hostname"),
                 "Should throw network-related error: \(error)")
-            print("✅ Correctly handled invalid URL error: \(error)")
+            // Correctly handled invalid URL error
         }
     }
     
@@ -114,7 +108,7 @@ final class DownloadTests: XCTestCase {
     
     func testDownloadM3U8Playlist() async throws {
         // Test downloading real M3U8 playlists
-        for (index, urlString) in testM3U8URLs.enumerated() {
+        for (_, urlString) in testM3U8URLs.enumerated() {
             guard let url = URL(string: urlString) else {
                 XCTFail("Invalid test URL: \(urlString)")
                 continue
@@ -128,14 +122,10 @@ final class DownloadTests: XCTestCase {
                 XCTAssertTrue(
                     content.contains("#EXTINF") || content.contains("#EXT-X-STREAM-INF"), "Content should contain media segment info")
                 
-                print("✅ Successfully downloaded M3U8 playlist \(index + 1): \(urlString)")
-                print("   Content length: \(content.count) characters")
-                print("   First 100 characters: \(String(content.prefix(100)))")
+                // Successfully downloaded M3U8 playlist
                 
             } catch {
-                // Some test URLs may be unavailable, log but don't fail
-                print("⚠️ Unable to download M3U8 playlist \(index + 1): \(urlString)")
-                print("   Error: \(error)")
+                // Some test URLs may be unavailable
             }
         }
     }
@@ -169,12 +159,7 @@ final class DownloadTests: XCTestCase {
             let files = try fileSystem.contentsOfDirectory(at: tempDirectory)
             XCTAssertGreaterThan(files.count, 0, "Should have downloaded files")
             
-            print("✅ Successfully downloaded \(files.count) video segments")
-            for file in files {
-                let attributes = try FileManager.default.attributesOfItem(atPath: file.path)
-                let fileSize = attributes[.size] as? Int64 ?? 0
-                print("   File: \(file.lastPathComponent), size: \(fileSize) bytes")
-            }
+            // Successfully downloaded \(files.count) video segments
             
         } catch {
             XCTFail("Video segment download failed: \(error)")
@@ -206,7 +191,7 @@ final class DownloadTests: XCTestCase {
         }
         
         let endTime = Date()
-        let duration = endTime.timeIntervalSince(startTime)
+        _ = endTime.timeIntervalSince(startTime)
         
         // Verify results
         XCTAssertEqual(results.count, urls.count, "Should download all URLs")
@@ -214,9 +199,7 @@ final class DownloadTests: XCTestCase {
             XCTAssertFalse(result.isEmpty, "Downloaded content should not be empty")
         }
         
-        print("✅ Simple concurrent download test completed")
-        print("   Download count: \(results.count)")
-        print("   Time taken: \(String(format: "%.2f", duration)) seconds")
+        // Simple concurrent download test completed
     }
     
     // MARK: - Simple Data Response Concurrent Download Tests
@@ -228,7 +211,7 @@ final class DownloadTests: XCTestCase {
         let startTime = Date()
         let httpSystem = self.httpSystem!
         typealias task =  (name: String, rawData: Data)
-        let results = try await withThrowingTaskGroup(of: task.self) { group in
+        _ = try await withThrowingTaskGroup(of: task.self) { group in
             for url in testSegmentURLs {
                 group.addTask {
                     task(
@@ -247,11 +230,9 @@ final class DownloadTests: XCTestCase {
         }
 
         let endTime = Date()
-        let duration = endTime.timeIntervalSince(startTime)
+        _ = endTime.timeIntervalSince(startTime)
 
-        print("✅ Simple concurrent download test completed")
-        print("   Download count: \(results.count)")
-        print("   Time taken: \(String(format: "%.2f", duration)) seconds")
+        // Simple concurrent download test completed
     }
     
     // MARK: - File System Integration Tests
@@ -273,9 +254,7 @@ final class DownloadTests: XCTestCase {
             let savedContent = try String(contentsOf: outputFile)
             XCTAssertEqual(content, savedContent, "Saved content should match downloaded content")
             
-            print("✅ Successfully downloaded and saved to file system")
-            print("   File path: \(outputFile.path)")
-            print("   File size: \(savedContent.count) characters")
+            // Successfully downloaded and saved to file system
             
         } catch {
             XCTFail("File system integration test failed: \(error)")
@@ -297,7 +276,7 @@ final class DownloadTests: XCTestCase {
         do {
             let content = try await httpSystem.downloadContent(from: URL(string: testM3U8URLs[0])!)
             XCTAssertFalse(content.isEmpty, "Should be able to download content")
-            print("✅ Timeout test passed, successfully downloaded content")
+            // Timeout test passed
         } catch {
             XCTFail("Timeout test failed: \(error)")
         }
@@ -317,7 +296,7 @@ final class DownloadTests: XCTestCase {
             XCTAssertFalse(content.isEmpty, "Downloaded content should not be empty")
             XCTAssertLessThan(duration, 10.0, "Download should complete within 10 seconds")
             
-            print("✅ Quick response test passed, time taken: \(String(format: "%.2f", duration)) seconds")
+            // Quick response test passed
         } catch {
             XCTFail("Quick response test failed: \(error)")
         }

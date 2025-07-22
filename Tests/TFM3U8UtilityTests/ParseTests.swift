@@ -44,7 +44,7 @@ final class ParseTests: XCTestCase {
         httpSystem = testContainer.resolve(M3U8DownloaderProtocol.self)
         parser = M3U8Parser()
         
-        print("📁 Test temporary directory: \(tempDirectory.path)")
+        // Test temporary directory created
     }
     
     override func tearDown() {
@@ -392,7 +392,7 @@ final class ParseTests: XCTestCase {
             switch result {
             case .media(let mediaPlaylist):
                 XCTAssertEqual(mediaPlaylist.tags.mediaSegments.count, 1)
-                print("✅ \(playlistType) type parsing successful")
+                // \(playlistType) type parsing successful
             case .master:
                 XCTFail("For \(playlistType) type, expected media playlist")
             case .cancelled:

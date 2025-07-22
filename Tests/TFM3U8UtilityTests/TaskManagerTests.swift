@@ -41,7 +41,7 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
         // Setup mock services
         setupMockServices()
         
-        print("📁 Test temporary directory: \(tempDirectory.path)")
+        // Test temporary directory created
     }
 
     override func tearDown() {
@@ -511,6 +511,10 @@ final class MockM3U8Parser: M3U8ParserServiceProtocol, @unchecked Sendable {
     func parseContent(_ content: String, baseURL: URL, type: PlaylistType) throws -> M3U8Parser.ParserResult {
         parseContentCalled = true
         
+        if content.isEmpty {
+            throw ProcessingError.emptyContent()
+        }
+        
         if let error = mockParseErrors[content] {
             throw error
         }
@@ -577,7 +581,26 @@ final class MockFileSystem: FileSystemServiceProtocol, @unchecked Sendable {
     }
     
     func content(atPath path: String) throws -> String {
-        return ""
+        // Return the actual file content if it exists, otherwise return mock content
+        if FileManager.default.fileExists(atPath: path) {
+            let data = try Data(contentsOf: URL(fileURLWithPath: path))
+            return String(data: data, encoding: .utf8) ?? ""
+        } else {
+            // Return mock M3U8 content for testing
+            return """
+            #EXTM3U
+            #EXT-X-VERSION:3
+            #EXT-X-TARGETDURATION:10
+            #EXT-X-MEDIA-SEQUENCE:0
+            #EXTINF:10.0,
+            segment1.ts
+            #EXTINF:10.0,
+            segment2.ts
+            #EXTINF:10.0,
+            segment3.ts
+            #EXT-X-ENDLIST
+            """
+        }
     }
     
     func contentsOfDirectory(at url: URL) throws -> [URL] {

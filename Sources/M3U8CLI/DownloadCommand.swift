@@ -96,6 +96,7 @@ struct DownloadCommand: AsyncParsableCommand {
         }
      
         do {
+            OutputFormatter.printInfo("Starting m3u8 file download...")
             try await TFM3U8Utility.download(
                 .web,
                 url: downloadURL,

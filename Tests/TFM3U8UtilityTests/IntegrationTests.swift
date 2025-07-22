@@ -52,7 +52,7 @@ final class IntegrationTests: XCTestCase {
     
     func testInvalidURLHandling() async throws {
         // Simplified invalid URL handling test, without using complex downloader
-        print("🔄 Starting invalid URL handling test...")
+        // Starting invalid URL handling test
         
         // Test invalid URL string handling
         let invalidURLString = ":/invalid"
@@ -79,12 +79,12 @@ final class IntegrationTests: XCTestCase {
         XCTAssertEqual(networkError.code, 1002)
         XCTAssertTrue(networkError.localizedDescription.contains(invalidURLString))
         
-        print("✅ Invalid URL handling test passed")
+        // Invalid URL handling test passed
     }
     
     func testInvalidM3U8Content() async throws {
         // Simplified invalid content test, without using complex parser
-        print("🔄 Starting invalid M3U8 content test...")
+        // Starting invalid M3U8 content test
         
         let invalidContent = "This is not valid M3U8 content"
         
@@ -102,38 +102,35 @@ final class IntegrationTests: XCTestCase {
         XCTAssertTrue(partialContent.hasPrefix("#EXTM3U"), "Partial content should have M3U8 header")
         XCTAssertFalse(partialContent.contains("#EXT-X-ENDLIST"), "Partial content should not have end marker")
         
-        print("✅ Invalid M3U8 content test passed")
+        // Invalid M3U8 content test passed
     }
     
     // MARK: - Configuration Tests
     
     func testDifferentConfigurations() {
         // Simplified configuration test, without using complex dependency injection
-        print("🔄 Starting configuration test...")
+        // Starting configuration test
         
         // Test default configuration parameters
         let defaultConfig = DIConfiguration()
         XCTAssertEqual(defaultConfig.maxConcurrentDownloads, 16)
         XCTAssertEqual(defaultConfig.downloadTimeout, 300)
-        print("   ✅ Default configuration test passed")
         
         // Test custom configuration parameters
         let customConfig = DIConfiguration(maxConcurrentDownloads: 8, downloadTimeout: 120)
         XCTAssertEqual(customConfig.maxConcurrentDownloads, 8)
         XCTAssertEqual(customConfig.downloadTimeout, 120)
-        print("   ✅ Custom configuration test passed")
         
         // Test configuration comparison
         XCTAssertNotEqual(defaultConfig.maxConcurrentDownloads, customConfig.maxConcurrentDownloads)
         XCTAssertNotEqual(defaultConfig.downloadTimeout, customConfig.downloadTimeout)
-        print("   ✅ Configuration comparison test passed")
         
-        print("✅ Configuration test passed")
+        // Configuration test passed
     }
     
     func testSimpleDependencyInjection() {
         // Test simple dependency injection, without using complex services
-        print("🔄 Starting simple dependency injection test...")
+        // Starting simple dependency injection test
         
         let container = DependencyContainer()
         
@@ -147,12 +144,12 @@ final class IntegrationTests: XCTestCase {
         XCTAssertEqual(config.maxConcurrentDownloads, 8)
         XCTAssertEqual(config.downloadTimeout, 120)
         
-        print("✅ Simple dependency injection test passed")
+        // Simple dependency injection test passed
     }
     
     func testM3U8ContentValidation() throws {
         // Simple M3U8 content validation test, without involving complex parser
-        print("🔄 Starting M3U8 content validation test...")
+        // Starting M3U8 content validation test
         
         let content = TestM3U8URLs.sampleM3U8Content
         
@@ -175,14 +172,14 @@ final class IntegrationTests: XCTestCase {
         XCTAssertTrue(segmentLines.contains("segment1.ts"))
         XCTAssertTrue(segmentLines.contains("segment2.ts"))
         
-        print("✅ M3U8 content validation test passed")
+        // M3U8 content validation test passed
     }
     
     // MARK: - Performance Tests
     
     func testPerformanceOptimizedVsDefault() {
         // Simplified performance test, without using complex dependency injection
-        print("🔄 Starting simplified performance test...")
+        // Starting simplified performance test
         
         let iterations = 1000
         
@@ -200,23 +197,21 @@ final class IntegrationTests: XCTestCase {
         }
         let urlTime = CFAbsoluteTimeGetCurrent() - urlStartTime
         
-        print("✅ Performance test completed")
-        print("   Configuration creation: \(String(format: "%.4f", configTime))s (\(iterations) times)")
-        print("   URL creation: \(String(format: "%.4f", urlTime))s (\(iterations) times)")
+        // Performance test completed
         
         // Verify performance data
         XCTAssertTrue(configTime >= 0 && urlTime >= 0, "Time should be positive")
         XCTAssertTrue(configTime < 1.0, "Configuration creation should be fast")
         XCTAssertTrue(urlTime < 1.0, "URL creation should be fast")
         
-        print("✅ Performance verification passed")
+        // Performance verification passed
     }
     
     // MARK: - Memory Tests
     
     func testMemoryManagement() async throws {
         // Simplified memory management test, testing basic usage of value types
-        print("🔄 Starting memory management test...")
+        // Starting memory management test
         
         // Test configuration object copying and comparison
         let config1 = DIConfiguration()
@@ -224,7 +219,6 @@ final class IntegrationTests: XCTestCase {
         
         XCTAssertNotEqual(config1.maxConcurrentDownloads, config2.maxConcurrentDownloads)
         XCTAssertNotEqual(config1.downloadTimeout, config2.downloadTimeout)
-        print("   ✅ Configuration object test passed")
         
         // Test URL object copying and comparison
         let url1 = URL(string: "https://example.com/test1.m3u8")!
@@ -232,7 +226,6 @@ final class IntegrationTests: XCTestCase {
         
         XCTAssertNotEqual(url1, url2)
         XCTAssertNotEqual(url1.absoluteString, url2.absoluteString)
-        print("   ✅ URL object test passed")
         
         // Test array and collection memory usage
         var urls: [URL] = []
@@ -244,9 +237,8 @@ final class IntegrationTests: XCTestCase {
         XCTAssertEqual(urls.count, 100)
         urls.removeAll()
         XCTAssertEqual(urls.count, 0)
-        print("   ✅ Collection memory test passed")
         
-        print("✅ Memory management test passed")
+        // Memory management test passed
     }
 }
 

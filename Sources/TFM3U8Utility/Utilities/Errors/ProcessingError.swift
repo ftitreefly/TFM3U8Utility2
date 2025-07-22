@@ -78,7 +78,52 @@ public struct ProcessingError: TFM3U8Error {
             operation: operation
         )
     }
-    
+
+    public static var masterPlaylistsNotSupported: ProcessingError {
+        ProcessingError(
+            code: 4005,
+            underlyingError: nil,
+            message: "Master playlists not supported yet",
+            operation: "download"
+        )
+    }
+
+    public static func emptyContent() -> ProcessingError {
+        ProcessingError(
+            code: 4007,
+            underlyingError: nil,
+            message: "Downloaded content is empty",
+            operation: "download"
+        )
+    }
+
+    public static func noValidSegments() -> ProcessingError {
+        ProcessingError(
+            code: 4008,
+            underlyingError: nil,
+            message: "No valid segments found",
+            operation: "segment extraction"
+        )
+    }
+
+    public static func ffmpegNotFound() -> ProcessingError {
+        ProcessingError(
+            code: 4009,
+            underlyingError: nil,
+            message: "FFmpeg command not found",
+            operation: "decrypt"
+        )
+    }
+
+    public static func taskNotFound(_ taskId: String) -> ProcessingError {
+        ProcessingError(
+            code: 4010,
+            underlyingError: nil,
+            message: "Task not found: \(taskId)",
+            operation: "cancel"
+        )
+    }
+
     public init(code: Int, underlyingError: Error?, message: String, operation: String?) {
         self.code = code
         self.underlyingError = underlyingError

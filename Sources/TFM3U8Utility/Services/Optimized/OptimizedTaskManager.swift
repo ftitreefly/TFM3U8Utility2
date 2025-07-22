@@ -292,12 +292,7 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
     /// - Throws: `ProcessingError` with code 4005 if the task is not found
     public func cancelTask(taskId: String) async throws {
         guard tasks[taskId] != nil else {
-            throw ProcessingError(
-                code: 4005,
-                underlyingError: nil,
-                message: "Task not found",
-                operation: "cancel"
-            )
+            throw ProcessingError.taskNotFound(taskId)
         }
         
         tasks[taskId]?.status = TaskStatus.cancelled
@@ -364,7 +359,10 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
         
         let downloadStartTime = Date()
         let (content, effectiveBaseUrl) = try await downloadAndParseContent(taskInfo: taskInfo, verbose: verbose)
-        
+        guard !content.isEmpty else {
+            throw ProcessingError.emptyContent()
+        }
+
         // Step 2: Parse playlist
         taskInfo.status = TaskStatus.downloading(progress: 0.2)
         
@@ -379,12 +377,7 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
         case .media(let mediaPlaylist):
             try await processMediaPlaylistOptimized(mediaPlaylist, taskInfo: &taskInfo, verbose: verbose)
         case .master:
-            throw ProcessingError(
-                code: 4006,
-                underlyingError: nil,
-                message: "Master playlists not supported yet",
-                operation: "download"
-            )
+            throw ProcessingError.masterPlaylistsNotSupported
         case .cancelled:
             throw ProcessingError.operationCancelled("parsing")
         }
@@ -437,19 +430,13 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
         }
         
         guard !segmentURLs.isEmpty else {
-            throw ProcessingError(
-                code: 4008,
-                underlyingError: nil,
-                message: "No valid segments found",
-                operation: "segment extraction"
-            )
+            throw ProcessingError.noValidSegments()
         }
         
         taskInfo.metrics.segmentCount = segmentURLs.count
         
         // Download segments with progress tracking
         taskInfo.status = TaskStatus.downloading(progress: 0.3)
-        print("⬇️  Starting .ts file download...")
         try await downloadSegmentsWithProgress(segmentURLs, to: tempDir, taskInfo: &taskInfo, verbose: verbose)
         
         // Calculate and display total bytes processed

@@ -43,12 +43,7 @@ public struct DefaultFileSystemService: FileSystemServiceProtocol {
         let expandedPath = NSString(string: path).expandingTildeInPath
         guard let data = FileManager.default.contents(atPath: expandedPath),
               let content = String(data: data, encoding: .utf8) else {
-            throw ProcessingError(
-                code: 4004,
-                underlyingError: nil,
-                message: "Failed to read file",
-                operation: "file reading"
-            )
+            throw FileSystemError.failedToReadFromFile(path)
         }
         return content
     }
