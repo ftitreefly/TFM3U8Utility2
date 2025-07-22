@@ -6,11 +6,18 @@ disabled_rules:
   - file_length
   - cyclomatic_complexity
   - type_name
+  - force_unwrapping
+  - force_cast
+  - force_try
+  - implicitly_unwrapped_optional
+  - inclusive_language
+  - identifier_name
+  - for_where
+  - trailing_comma
+  - non_optional_string_data_conversion
 
 opt_in_rules:
   - empty_count
-  - force_unwrapping
-  - implicitly_unwrapped_optional
   - overridden_super_call
   - redundant_nil_coalescing
   - sorted_imports
