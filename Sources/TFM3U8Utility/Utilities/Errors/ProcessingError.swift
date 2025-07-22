@@ -79,7 +79,7 @@ public struct ProcessingError: TFM3U8Error {
         )
     }
 
-    public static var masterPlaylistsNotSupported: ProcessingError {
+    public static func masterPlaylistsNotSupported() -> ProcessingError {
         ProcessingError(
             code: 4005,
             underlyingError: nil,

@@ -377,7 +377,7 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
         case .media(let mediaPlaylist):
             try await processMediaPlaylistOptimized(mediaPlaylist, taskInfo: &taskInfo, verbose: verbose)
         case .master:
-            throw ProcessingError.masterPlaylistsNotSupported
+            throw ProcessingError.masterPlaylistsNotSupported()
         case .cancelled:
             throw ProcessingError.operationCancelled("parsing")
         }

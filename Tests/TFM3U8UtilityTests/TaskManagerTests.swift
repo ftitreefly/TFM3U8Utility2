@@ -164,7 +164,7 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
             try await taskManager.cancelTask(taskId: nonExistentTaskId)
             XCTFail("Cancelling non-existent task should throw error")
         } catch let error as ProcessingError {
-            XCTAssertEqual(error.code, 4005, "Should be task not found error")
+            XCTAssertEqual(error.code, 4010, "Should be task not found error")
         } catch {
             XCTFail("Should throw ProcessingError type error")
         }
