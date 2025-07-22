@@ -1,18 +1,19 @@
-# TFM3U8Utility
+# TFM3U8Utility2
 
-A high-performance Swift library and CLI tool for downloading, parsing, and processing M3U8 video files. Built with Swift 6+ features and modern concurrency patterns.
+A high-performance Swift library and CLI tool for downloading, parsing, and processing M3U8 video files. Built with Swift 6+ features, modern concurrency patterns, and comprehensive dependency injection architecture.
 
-## Features
+## ✨ Features
 
-- 🚀 **High Performance**: Optimized for speed with Swift 6 concurrency features
-- 🔧 **Dependency Injection**: Modular architecture with full DI support
-- 📱 **Cross-Platform**: macOS 12.0+ support with CLI and library interfaces
-- 🛡️ **Error Handling**: Comprehensive error handling with detailed error types
-- 🔄 **Concurrent Downloads**: Configurable concurrent download support
-- 📊 **Progress Tracking**: Real-time progress monitoring and status updates
-- 🎯 **Multiple Sources**: Support for both web URLs and local files
-- 🎬 **Video Processing**: Integration with FFmpeg for video segment combination
+- 🚀 **Swift 6+ Ready**: Built with the latest Swift 6 features including strict concurrency checking
+- 🔧 **Dependency Injection**: Full DI architecture for better testability and modularity
+- 📱 **Cross-Platform**: macOS 12.0+ support with both library and CLI interfaces
+- 🛡️ **Comprehensive Error Handling**: Detailed error types with context information
+- 🔄 **Concurrent Downloads**: Configurable concurrent download support (up to 20 concurrent tasks)
+- 📊 **Real-time Progress**: Verbose output mode for detailed download monitoring
+- 🎯 **Multiple Sources**: Support for both web URLs and local M3U8 files
+- 🎬 **Video Processing**: FFmpeg integration for video segment combination
 - 🔐 **Encryption Support**: Built-in support for encrypted M3U8 streams
+- 🧪 **Extensive Testing**: 8 comprehensive test suites covering all major functionality
 
 ## 📚 文档
 
@@ -22,7 +23,7 @@ A high-performance Swift library and CLI tool for downloading, parsing, and proc
 - **[API 参考](Docs/API_REFERENCE.md)** - 完整的 API 文档
 - **[贡献指南](Docs/CONTRIBUTING.md)** - 如何为项目贡献代码
 
-## Installation
+## 🛠️ Installation
 
 ### Requirements
 
@@ -49,22 +50,23 @@ For optimal performance, install these tools:
 brew install ffmpeg
 ```
 
-## Quick Start
+## 🚀 Quick Start
 
 ### As a Library
 
 ```swift
 import TFM3U8Utility
 
-// Initialize the utility
+// Initialize the utility with performance-optimized configuration
 await TFM3U8Utility.initialize()
 
-// Download an M3U8 file
+// Download an M3U8 file with verbose output
 try await TFM3U8Utility.download(
     .web,
     url: URL(string: "https://example.com/video.m3u8")!,
     savedDirectory: "/Users/username/Downloads/videos/",
-    name: "my-video"
+    name: "my-video",
+    verbose: true
 )
 
 // Parse an M3U8 file
@@ -85,20 +87,23 @@ case .cancelled:
 ### As a CLI Tool
 
 ```bash
-# Download an M3U8 file
+# Download an M3U8 file with default settings
 m3u8-utility download https://example.com/video.m3u8
 
-# Download with custom filename to my-video.mp4
+# Download with custom filename (output will be .mp4)
 m3u8-utility download https://example.com/video.m3u8 --name my-video
 
 # Download with verbose output
 m3u8-utility download https://example.com/video.m3u8 -v
 
-# Show tool information
+# Show tool information and version
 m3u8-utility info
+
+# Get help for all commands
+m3u8-utility --help
 ```
 
-## API Reference
+## 📖 API Reference
 
 ### Core Functions
 
@@ -116,9 +121,9 @@ config.maxConcurrentDownloads = 10
 await TFM3U8Utility.initialize(with: config)
 ```
 
-#### `TFM3U8Utility.download(_:url:savedDirectory:name:configuration:)`
+#### `TFM3U8Utility.download(_:url:savedDirectory:name:configuration:verbose:)`
 
-Downloads M3U8 content and processes it.
+Downloads M3U8 content and processes it with comprehensive error handling.
 
 ```swift
 try await TFM3U8Utility.download(
@@ -126,18 +131,27 @@ try await TFM3U8Utility.download(
     url: URL(string: "https://example.com/video.m3u8")!,
     savedDirectory: "/path/to/save",
     name: "my-video",
-    configuration: DIConfiguration.performanceOptimized()
+    configuration: DIConfiguration.performanceOptimized(),
+    verbose: true  // Enable detailed progress output
 )
 ```
 
 #### `TFM3U8Utility.parse(url:method:configuration:)`
 
-Parses M3U8 files and returns structured data.
+Parses M3U8 files and returns structured data with support for both web and local files.
 
 ```swift
+// Parse from web URL
 let result = try await TFM3U8Utility.parse(
     url: URL(string: "https://example.com/video.m3u8")!,
     method: .web,
+    configuration: DIConfiguration.performanceOptimized()
+)
+
+// Parse local file
+let localResult = try await TFM3U8Utility.parse(
+    url: URL(fileURLWithPath: "/path/to/local/playlist.m3u8"),
+    method: .local,
     configuration: DIConfiguration.performanceOptimized()
 )
 ```
@@ -148,42 +162,46 @@ let result = try await TFM3U8Utility.parse(
 let config = DIConfiguration(
     ffmpegPath: "/opt/homebrew/bin/ffmpeg",
     curlPath: "/usr/bin/curl",
-    defaultHeaders: ["User-Agent": "Custom User Agent"],
+    defaultHeaders: [
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+        "Accept": "*/*",
+        "Accept-Language": "en-US,en;q=0.9"
+    ],
     maxConcurrentDownloads: 20,
     downloadTimeout: 60
 )
 ```
 
-## Architecture
+## 🏗️ Architecture
 
 ### Core Components
 
-- **TFM3U8Utility**: Main public API interface
-- **M3U8Parser**: High-performance playlist parser
-- **OptimizedTaskManager**: Concurrent task management
-- **OptimizedVideoProcessor**: Video segment processing
-- **DependencyContainer**: Dependency injection system
+- **TFM3U8Utility**: Main public API interface with comprehensive documentation
+- **M3U8Parser**: High-performance playlist parser supporting master and media playlists
+- **OptimizedTaskManager**: Concurrent task management with configurable limits
+- **OptimizedVideoProcessor**: Video segment processing with FFmpeg integration
+- **DependencyContainer**: Full dependency injection system for modularity
 
 ### Service Protocols
 
-- `M3U8DownloaderProtocol`: Content downloading
-- `M3U8ParserServiceProtocol`: Playlist parsing
-- `VideoProcessorProtocol`: Video processing
-- `TaskManagerProtocol`: Task coordination
-- `FileSystemServiceProtocol`: File operations
-- `CommandExecutorProtocol`: External command execution
+- `M3U8DownloaderProtocol`: Content downloading with retry mechanisms
+- `M3U8ParserServiceProtocol`: Playlist parsing with error context
+- `VideoProcessorProtocol`: Video processing and segment combination
+- `TaskManagerProtocol`: Task coordination and progress tracking
+- `FileSystemServiceProtocol`: File operations with error handling
+- `CommandExecutorProtocol`: External command execution (FFmpeg, curl)
 
 ### Error Handling
 
-The library provides comprehensive error types:
+The library provides comprehensive error types with detailed context:
 
-- `NetworkError`: Network-related errors
-- `ParsingError`: M3U8 parsing errors
-- `FileSystemError`: File system operations
-- `ProcessingError`: Video processing errors
-- `ConfigurationError`: Configuration validation
+- `NetworkError`: Network-related errors with HTTP status codes
+- `ParsingError`: M3U8 parsing errors with line numbers and context
+- `FileSystemError`: File system operations with path information
+- `ProcessingError`: Video processing errors with command details
+- `ConfigurationError`: Configuration validation errors
 
-## CLI Commands
+## 🖥️ CLI Commands
 
 ### Download Command
 
@@ -192,19 +210,22 @@ m3u8-utility download <URL> [options]
 ```
 
 **Options:**
-- `--name, -n`: Custom output filename
-- `--verbose, -v`: Enable verbose output
+- `--name, -n`: Custom output filename (outputs .mp4 file)
+- `--verbose, -v`: Enable verbose output for detailed progress
 
 **Examples:**
 ```bash
-# Basic download
+# Basic download to Downloads folder
 m3u8-utility download https://example.com/video.m3u8
 
 # Download with custom name
 m3u8-utility download https://example.com/video.m3u8 --name my-video
 
-# Verbose download
+# Verbose download with progress details
 m3u8-utility download https://example.com/video.m3u8 -v
+
+# Combined options
+m3u8-utility download https://example.com/video.m3u8 --name my-video -v
 ```
 
 ### Info Command
@@ -215,7 +236,7 @@ m3u8-utility info
 
 Displays tool information, version, and available features.
 
-## Advanced Usage
+## 🔧 Advanced Usage
 
 ### Custom Configuration
 
@@ -226,7 +247,6 @@ let customConfig = DIConfiguration(
     maxConcurrentDownloads: 5,
     downloadTimeout: 120
 )
-```
 
 // Initialize with custom config
 await TFM3U8Utility.initialize(with: customConfig)
@@ -236,7 +256,7 @@ await TFM3U8Utility.initialize(with: customConfig)
 
 ```swift
 do {
-    try await TFM3U8Utility.download(.web, url: videoURL)
+    try await TFM3U8Utility.download(.web, url: videoURL, verbose: true)
 } catch let error as FileSystemError {
     print("File system error: \(error.message)")
 } catch let error as NetworkError {
@@ -261,11 +281,11 @@ container.register(M3U8DownloaderProtocol.self) {
 Dependencies = container
 ```
 
-## Performance Optimization
+## ⚡ Performance Optimization
 
 ### Concurrent Downloads
 
-The library supports configurable concurrent downloads:
+The library supports highly configurable concurrent downloads:
 
 ```swift
 let config = DIConfiguration.performanceOptimized()
@@ -274,36 +294,41 @@ config.maxConcurrentDownloads = 20  // Adjust based on your needs
 
 ### Hardware Acceleration
 
-Video processing automatically detects and uses hardware acceleration when available.
+Video processing automatically detects and uses hardware acceleration when available through FFmpeg.
 
 ### Memory Management
 
 - Efficient streaming parser for large playlists
 - Memory-mapped file operations
 - Automatic cleanup of temporary files
+- Configurable download timeouts
 
-## Testing
+## 🧪 Testing
 
-Run the test suite:
+Run the comprehensive test suite:
 
 ```bash
 swift test
 ```
 
-The project includes comprehensive tests for:
-- Download functionality
-- Parsing accuracy
-- Error handling
-- Performance optimization
-- Integration scenarios
+The project includes 8 comprehensive test suites:
 
-## Contributing
+- **DownloadTests**: Download functionality and error handling
+- **ParseTests**: M3U8 parsing accuracy and edge cases
+- **NetworkTests**: Network operations and retry mechanisms
+- **TaskManagerTests**: Concurrent task management
+- **PerformanceOptimizedTests**: Performance optimization features
+- **IntegrationTests**: End-to-end functionality
+- **CombineTests**: Reactive programming patterns
+- **XCTestManifests**: Test discovery and organization
+
+## 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
-3. Make your changes
+3. Make your changes following Swift 6+ guidelines
 4. Add tests for new functionality
-5. Ensure all tests pass
+5. Ensure all tests pass with `swift test`
 6. Submit a pull request
 
 ### Development Setup
@@ -321,9 +346,12 @@ swift test
 
 # Build and run CLI
 swift run m3u8-utility --help
+
+# Run with verbose output
+swift run m3u8-utility download https://example.com/video.m3u8 -v
 ```
 
-## License
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
@@ -350,18 +378,22 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 ```
 
-## Support
+## 🆘 Support
 
 - **Issues**: [GitHub Issues](https://github.com/ftitreefly/TFM3U8Utility2/issues)
 - **Documentation**: [API Documentation](https://ftitreefly.github.io/TFM3U8Utility2)
 - **Discussions**: [GitHub Discussions](https://github.com/ftitreefly/TFM3U8Utility2/discussions)
 
-## Changelog
+## 📋 Changelog
 
-### Version 1.0.0
-- Initial release
-- Swift 6+ support
-- High-performance M3U8 processing
-- CLI tool with download and info commands
-- Comprehensive error handling
-- Dependency injection architecture
+### Version 1.0.0 - 2025-07-21
+- 🎉 Initial release with Swift 6+ support
+- 🚀 High-performance M3U8 processing with concurrent downloads
+- 🖥️ CLI tool with download and info commands
+- 🛡️ Comprehensive error handling with detailed error types
+- 🔧 Full dependency injection architecture
+- 📱 Cross-platform macOS support (12.0+)
+- 🎬 Video processing with FFmpeg integration
+- 🔐 Encryption support for M3U8 streams
+- 🧪 Extensive test coverage (8 test suites)
+- 📊 Verbose output mode for detailed progress tracking
