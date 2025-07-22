@@ -1,0 +1,26 @@
+disabled_rules:
+  - trailing_whitespace
+  - line_length
+  - function_body_length
+  - type_body_length
+  - file_length
+  - cyclomatic_complexity
+  - type_name
+
+opt_in_rules:
+  - empty_count
+  - force_unwrapping
+  - implicitly_unwrapped_optional
+  - overridden_super_call
+  - redundant_nil_coalescing
+  - sorted_imports
+  - vertical_parameter_alignment_on_call
+
+included:
+  - Sources
+  - Tests
+
+excluded:
+  - .build
+  - Package.resolved
+  - Tests/TFM3U8UtilityTests/Scripts 
