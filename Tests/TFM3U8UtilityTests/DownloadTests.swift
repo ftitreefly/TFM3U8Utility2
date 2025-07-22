@@ -101,7 +101,7 @@ final class DownloadTests: XCTestCase {
             // Verify error type
             XCTAssertTrue(
                 error is NetworkError
-                || error.localizedDescription.contains("network connection was interrupted")
+                || error.localizedDescription.contains("A server with the specified hostname could not be found.")
                 || error.localizedDescription.contains("-1003")
                 || error.localizedDescription.contains("未能找到使用指定主机名的服务器")
                 || error.localizedDescription.contains("could not find server with specified hostname"),

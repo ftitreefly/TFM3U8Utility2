@@ -16,11 +16,11 @@ A high-performance Swift library and CLI tool for downloading, parsing, and proc
 
 ## 📚 文档
 
-- **[Project Overview](Docs/DOCUMENTATION.md)** - Project architecture and tech stack description
-- **[Quick Start Guide](Docs/QUICKSTART.md)** - 5-minute quick start
-- **[Complete Documentation](Docs/DOCUMENTATION.md)** - Detailed project documentation and architecture
-- **[API Reference](Docs/API_REFERENCE.md)** - Complete API documentation
-- **[Contributing Guide](Docs/CONTRIBUTING.md)** - How to contribute to the project
+- **[项目概览](Docs/DOCUMENTATION.md)** - 项目架构和技术栈说明
+- **[快速开始指南](Docs/QUICKSTART.md)** - 5分钟快速上手
+- **[完整文档](Docs/DOCUMENTATION.md)** - 详细的项目文档和架构说明
+- **[API 参考](Docs/API_REFERENCE.md)** - 完整的 API 文档
+- **[贡献指南](Docs/CONTRIBUTING.md)** - 如何为项目贡献代码
 
 ## Installation
 
