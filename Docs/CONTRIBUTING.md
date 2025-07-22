@@ -212,8 +212,7 @@ Tests/TFM3U8UtilityTests/
 ├── NetworkTests.swift           # 网络功能测试
 ├── IntegrationTests.swift       # 集成测试
 ├── PerformanceOptimizedTests.swift  # 性能测试
-└── TestData/                    # 测试数据
-    └── ts_segments/             # TS 片段文件
+└── CombineTests.swift           # 视频片段合并测试
 ```
 
 ### 测试编写规范
