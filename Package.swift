@@ -48,10 +48,7 @@ let package = Package(
         ),
         .testTarget(
             name: "TFM3U8UtilityTests",
-            dependencies: ["TFM3U8Utility"],
-            resources: [
-                .copy("TestData"),
-            ]
+            dependencies: ["TFM3U8Utility"]
         ),
     ]
 )
