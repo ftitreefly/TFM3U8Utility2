@@ -365,9 +365,8 @@ public actor Logger {
                 level: level,
                 message: message,
                 category: category,
-                file: file,
-                function: function,
-                line: line
+                fileAndLine: "\(file):\(line)",
+                function: function
             )
             
             print(formattedMessage)
@@ -380,17 +379,15 @@ public actor Logger {
     ///   - level: The log level
     ///   - message: The message to log
     ///   - category: The category of the log message
-    ///   - file: The source file
+    ///   - fileAndLine: The source file and line number
     ///   - function: The source function
-    ///   - line: The source line number
     /// - Returns: The formatted log message
     private static func formatMessage(
         level: LogLevel,
         message: String,
         category: LogCategory,
-        file: String,
-        function: String,
-        line: Int
+        fileAndLine: String,
+        function: String
     ) -> String {
         var components: [String] = []
         
@@ -418,8 +415,7 @@ public actor Logger {
         
         // Add source location for debug and trace levels
         if level >= .debug && configuration.minimumLevel >= .debug {
-            let fileName = URL(fileURLWithPath: file).lastPathComponent
-            components.append("(\(fileName):\(line))")
+            components.append("(\(fileAndLine))")
         }
         
         return components.joined(separator: " ")
