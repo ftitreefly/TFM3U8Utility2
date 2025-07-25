@@ -1,6 +1,6 @@
 # TFM3U8Utility2
 
-A high-performance Swift library and CLI tool for downloading, parsing, and processing M3U8 video files. Built with Swift 6+ features, modern concurrency patterns, and comprehensive dependency injection architecture.
+A high-performance Swift library and CLI tool for downloading, parsing, and processing M3U8 video files. Built with Swift 6+ features, modern concurrency patterns, comprehensive dependency injection architecture, and advanced logging system.
 
 ## ✨ Features
 
@@ -9,7 +9,7 @@ A high-performance Swift library and CLI tool for downloading, parsing, and proc
 - 📱 **Cross-Platform**: macOS 12.0+ support with both library and CLI interfaces
 - 🛡️ **Comprehensive Error Handling**: Detailed error types with context information
 - 🔄 **Concurrent Downloads**: Configurable concurrent download support (up to 20 concurrent tasks)
-- 📊 **Real-time Progress**: Verbose output mode for detailed download monitoring
+- 📊 **Advanced Logging System**: Multi-level logging with categories, timestamps, and colored output
 - 🎯 **Multiple Sources**: Support for both web URLs and local M3U8 files
 - 🎬 **Video Processing**: FFmpeg integration for video segment combination
 - 🔐 **Encryption Support**: Built-in support for encrypted M3U8 streams
@@ -21,6 +21,7 @@ A high-performance Swift library and CLI tool for downloading, parsing, and proc
 - **[快速开始指南](Docs/QUICKSTART.md)** - 5分钟快速上手
 - **[完整文档](Docs/DOCUMENTATION.md)** - 详细的项目文档和架构说明
 - **[API 参考](Docs/API_REFERENCE.md)** - 完整的 API 文档
+- **[日志系统指南](Docs/LOGGING_GUIDE.md)** - 高级日志系统使用指南
 - **[贡献指南](Docs/CONTRIBUTING.md)** - 如何为项目贡献代码
 
 ## 🛠️ Installation
@@ -103,6 +104,99 @@ m3u8-utility info
 m3u8-utility --help
 ```
 
+## 📊 Advanced Logging System
+
+TFM3U8Utility2 features a comprehensive logging system with multiple levels, categories, and configurable output formats.
+
+### Log Levels
+
+```swift
+public enum LogLevel: Int, CaseIterable, Comparable, Sendable {
+    case none = 0      // No logging output
+    case error = 1     // Only critical errors and warnings
+    case info = 2      // Important information and errors
+    case debug = 3     // Detailed debugging information
+    case verbose = 4   // Very detailed debugging information
+    case trace = 5     // All possible information including trace data
+}
+```
+
+### Log Categories
+
+```swift
+public enum LogCategory: String, CaseIterable {
+    case general = "General"       // 📋 General information
+    case network = "Network"       // 🌐 Network operations
+    case fileSystem = "FileSystem" // 📁 File system operations
+    case parsing = "Parsing"       // 📝 Parsing operations
+    case processing = "Processing" // ⚙️ Processing operations
+    case taskManager = "TaskManager" // 🎯 Task management
+    case download = "Download"     // ⬇️ Download operations
+    case cli = "CLI"              // 💻 Command line interface
+}
+```
+
+### Configuration
+
+```swift
+// Production configuration - minimal output
+Logger.configure(.production())
+
+// Development configuration - detailed output
+Logger.configure(.development())
+
+// Verbose configuration - maximum output
+Logger.configure(.verbose())
+
+// Custom configuration
+let customConfig = LoggerConfiguration(
+    minimumLevel: .debug,
+    includeTimestamps: true,
+    includeCategories: true,
+    includeEmoji: true,
+    enableColors: true
+)
+Logger.configure(customConfig)
+```
+
+### Usage Examples
+
+```swift
+// Basic logging
+Logger.error("Network connection failed", category: .network)
+Logger.info("Download started", category: .download)
+Logger.debug("Parsing M3U8 content", category: .parsing)
+Logger.verbose("Detailed debug information", category: .processing)
+Logger.trace("Function call trace", category: .general)
+
+// Special formatted logs
+Logger.success("Download completed!", category: .download)
+Logger.warning("File already exists, will rename", category: .fileSystem)
+Logger.progress("Download progress: 75%", category: .download)
+
+// Legacy compatibility
+vprintf(verbose, "Debug information")
+vprintf(verbose, tab: 2, "Indented debug information")
+```
+
+### Output Examples
+
+**Development Mode:**
+```
+14:30:25.123 [INFO] [📋General] Application started
+14:30:25.124 [DEBUG] [🌐Network] Starting download: https://example.com/video.m3u8
+14:30:25.125 [INFO] [📊Download] Download progress: 25%
+14:30:25.126 [SUCCESS] [📁FileSystem] File saved: /Users/user/Downloads/video.mp4
+```
+
+**Production Mode:**
+```
+14:30:25.123 [ERROR] [Network] Network connection failed: Connection timeout
+14:30:25.124 [INFO] [FileSystem] File saved: /Users/user/Downloads/video.mp4
+```
+
+For detailed logging system documentation, see [Logging Guide](Docs/LOGGING_GUIDE.md).
+
 ## 📖 API Reference
 
 ### Core Functions
@@ -123,7 +217,7 @@ await TFM3U8Utility.initialize(with: config)
 
 #### `TFM3U8Utility.download(_:url:savedDirectory:name:configuration:verbose:)`
 
-Downloads M3U8 content and processes it with comprehensive error handling.
+Downloads M3U8 content and processes it with comprehensive error handling and logging.
 
 ```swift
 try await TFM3U8Utility.download(
@@ -132,7 +226,7 @@ try await TFM3U8Utility.download(
     savedDirectory: "/path/to/save",
     name: "my-video",
     configuration: DIConfiguration.performanceOptimized(),
-    verbose: true  // Enable detailed progress output
+    verbose: true  // Enable detailed progress output and logging
 )
 ```
 
@@ -181,6 +275,7 @@ let config = DIConfiguration(
 - **OptimizedTaskManager**: Concurrent task management with configurable limits
 - **OptimizedVideoProcessor**: Video segment processing with FFmpeg integration
 - **DependencyContainer**: Full dependency injection system for modularity
+- **Logger**: Advanced logging system with multiple levels and categories
 
 ### Service Protocols
 
@@ -211,7 +306,7 @@ m3u8-utility download <URL> [options]
 
 **Options:**
 - `--name, -n`: Custom output filename (outputs .mp4 file)
-- `--verbose, -v`: Enable verbose output for detailed progress
+- `--verbose, -v`: Enable verbose output for detailed progress and logging
 
 **Examples:**
 ```bash
@@ -221,7 +316,7 @@ m3u8-utility download https://example.com/video.m3u8
 # Download with custom name
 m3u8-utility download https://example.com/video.m3u8 --name my-video
 
-# Verbose download with progress details
+# Verbose download with progress details and logging
 m3u8-utility download https://example.com/video.m3u8 -v
 
 # Combined options
@@ -281,6 +376,30 @@ container.register(M3U8DownloaderProtocol.self) {
 Dependencies = container
 ```
 
+### Logging Integration
+
+```swift
+// Configure logging based on environment
+#if DEBUG
+Logger.configure(.development())
+#else
+Logger.configure(.production())
+#endif
+
+// Configure logging based on verbose flag
+if verbose {
+    Logger.configure(.verbose())
+} else {
+    Logger.configure(.production())
+}
+
+// Use logging in your code
+Logger.info("Starting download process", category: .download)
+Logger.debug("Initializing download manager", category: .taskManager)
+Logger.progress("Downloaded 10/50 segments", category: .download)
+Logger.success("Download completed successfully", category: .download)
+```
+
 ## ⚡ Performance Optimization
 
 ### Concurrent Downloads
@@ -302,6 +421,12 @@ Video processing automatically detects and uses hardware acceleration when avail
 - Memory-mapped file operations
 - Automatic cleanup of temporary files
 - Configurable download timeouts
+
+### Logging Performance
+
+- Asynchronous logging operations that don't block the main thread
+- Configurable log levels to reduce output in production
+- Efficient string formatting and output handling
 
 ## 🧪 Testing
 
@@ -386,7 +511,7 @@ THE SOFTWARE.
 
 ## 📋 Changelog
 
-### Version 1.0.0 - 2025-07-21
+### Version 1.1.0 - 2025-07-25
 - 🎉 Initial release with Swift 6+ support
 - 🚀 High-performance M3U8 processing with concurrent downloads
 - 🖥️ CLI tool with download and info commands
@@ -396,4 +521,5 @@ THE SOFTWARE.
 - 🎬 Video processing with FFmpeg integration
 - 🔐 Encryption support for M3U8 streams
 - 🧪 Extensive test coverage (8 test suites)
-- 📊 Verbose output mode for detailed progress tracking
+- 📊 Advanced logging system with multiple levels and categories
+- 🎯 Verbose output mode for detailed progress tracking and debugging

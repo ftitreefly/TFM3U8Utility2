@@ -96,9 +96,11 @@ public struct TFM3U8Utility {
         configuration: DIConfiguration = DIConfiguration.performanceOptimized(),
         verbose: Bool = false
     ) async throws {
+        Logger.configure(verbose ? .verbose() : .production())
+        
         await Dependencies.configure(with: configuration)
         
-        vprintf(verbose, "Concurrent file downloads count: \(configuration.maxConcurrentDownloads), single file download timeout: \(configuration.downloadTimeout) seconds")
+        Logger.debug("Concurrent file downloads count: \(configuration.maxConcurrentDownloads), single file download timeout: \(configuration.downloadTimeout) seconds", category: .download)
         // Use dependency injection for file system operations
         let fileSystem = await Dependencies.resolve(FileSystemServiceProtocol.self)
         

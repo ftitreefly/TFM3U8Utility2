@@ -96,7 +96,7 @@ struct DownloadCommand: AsyncParsableCommand {
         }
      
         do {
-            OutputFormatter.printInfo("Starting m3u8 file download...")
+            if verbose { OutputFormatter.printInfo("Starting m3u8 file download...") }
             try await TFM3U8Utility.download(
                 .web,
                 url: downloadURL,
@@ -104,7 +104,7 @@ struct DownloadCommand: AsyncParsableCommand {
                 name: name,
                 verbose: verbose
             )
-            OutputFormatter.printSuccess("Download completed!")
+            if verbose { OutputFormatter.printSuccess("Download completed!") }
         } catch {
             OutputFormatter.printError("Download failed: \(error.localizedDescription)")
             throw ExitCode.failure

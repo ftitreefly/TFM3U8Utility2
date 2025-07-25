@@ -51,7 +51,7 @@ struct InfoCommand: ParsableCommand {
     /// - List of main features and capabilities
     /// - Instructions for getting help
     mutating func run() {
-        print("M3U8 Utility v1.0.0")
+        print("M3U8 Utility v1.1.0")
         print("A Swift Language based M3U8 video download and processing tool")
         print("")
         print("Features:")

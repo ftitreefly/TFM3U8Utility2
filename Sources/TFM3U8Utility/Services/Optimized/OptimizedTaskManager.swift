@@ -230,10 +230,10 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
         let taskId = generateTaskId(for: request.url)
         activeTasksCount += 1
         
-        vprintf(request.verbose, "Current active tasks: \(activeTasksCount)/\(maxConcurrentTasks)")
+        Logger.debug("Current active tasks: \(activeTasksCount)/\(maxConcurrentTasks)", category: .taskManager)
         defer {
             activeTasksCount -= 1
-            vprintf(request.verbose, "Task completed, current active tasks: \(activeTasksCount)/\(maxConcurrentTasks)")
+            Logger.debug("Task completed, current active tasks: \(activeTasksCount)/\(maxConcurrentTasks)", category: .taskManager)
         }
         
         var taskInfo = TaskInfo(
@@ -332,7 +332,7 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
     private func displayProgress(completed: Int, total: Int, speed: Double, startTime: Date) {
         let percentage = Double(completed) / Double(total) * 100
         let speedFormatted = formatBytes(Int64(speed))
-        print("\r📊 Completed \(completed)/\(total) segments (\(String(format: "%.1f", percentage))%) | Speed: \(speedFormatted)/s", terminator: "")
+        print("\r📊 Starting download \(completed)/\(total) segments (\(String(format: "%.1f", percentage))%) | Speed: \(speedFormatted)/s", terminator: "")
         fflush(stdout)
         if completed == total { print("") }
     }
@@ -352,7 +352,7 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
         _ = Date() // Mark start time for potential future metrics
         self.tempDir = try fileSystem.createTemporaryDirectory(taskInfo.url.absoluteString)
         
-        vprintf(verbose, "Creating temporary directory: \(tempDir.path)")
+        Logger.debug("Creating temporary directory: \(tempDir.path)", category: .fileSystem)
 
         // Step 1: Download and parse M3U8
         taskInfo.status = TaskStatus.downloading(progress: 0.1)
@@ -386,9 +386,11 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
         
         // Step 4: Copy file
         try processCopyFile(taskInfo)
+        Logger.debug("File saved to \(taskInfo.savedDirectory) | Size: \(formatBytes(taskInfo.metrics.totalBytes)) data", category: .fileSystem)
 
         // Step 5: Clean up
         try fileSystem.removeItem(at: tempDir.path)
+        Logger.debug("Cleaned up temporary directory: \(tempDir.path)", category: .fileSystem)
     }
     
     /// Download and parse content from the task
@@ -401,12 +403,12 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
     ///   - verbose: Whether to output detailed information
     private func downloadAndParseContent(taskInfo: TaskInfo, verbose: Bool = false) async throws -> (String, URL) {
         if case .local = taskInfo.method {
-            vprintf(verbose, "Reading from local file: \(taskInfo.url.path)")
+            Logger.debug("Reading from local file: \(taskInfo.url.path)", category: .fileSystem)
             let content = try fileSystem.content(atPath: taskInfo.url.path)
             let baseUrl = taskInfo.baseUrl ?? taskInfo.url.deletingLastPathComponent()
             return (content, baseUrl)
         } else {
-            vprintf(verbose, "Downloading from network: \(taskInfo.url.absoluteString)")
+            Logger.debug("Downloading from network: \(taskInfo.url.absoluteString)", category: .network)
             let content = try await downloader.downloadContent(from: taskInfo.url)
             let baseUrl = taskInfo.baseUrl ?? taskInfo.url.deletingLastPathComponent()
             return (content, baseUrl)
@@ -441,12 +443,12 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
         
         // Calculate and display total bytes processed
         taskInfo.metrics.totalBytes = try await calculateTotalBytes(in: tempDir)
-        print("📊 Total processed: \(formatBytes(taskInfo.metrics.totalBytes)) data")
+        Logger.debug("Total processed: \(formatBytes(taskInfo.metrics.totalBytes)) data", category: .download)
 
         // Combine segments
         taskInfo.status = TaskStatus.processing
         
-        print("🔗 Combining video segments...")
+        Logger.debug("Combining video segments...", category: .processing)
         let outputPath = tempDir.appendingPathComponent(getOutputFileName(from: taskInfo.url, customName: nil))
         try await processor.combineSegments(in: tempDir, outputFile: outputPath)
     }
@@ -462,16 +464,17 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
     private func processCopyFile(_ taskInfo: TaskInfo) throws {
         let outputFileName = getOutputFileName(from: taskInfo.url, customName: taskInfo.fileName)
         let outputPath = URL(fileURLWithPath: taskInfo.savedDirectory).appendingPathComponent(outputFileName)   
+        let sizeInfo = formatBytes(taskInfo.metrics.totalBytes)
         
         let originalName = getOutputFileName(from: taskInfo.url, customName: nil)
         if FileManager.default.fileExists(atPath: outputPath.path) {
             let newFileName = outputFileName.replacingOccurrences(of: ".mp4", with: "_1.mp4")
             let newOutputPath = URL(fileURLWithPath: taskInfo.savedDirectory).appendingPathComponent(newFileName)
             try? fileSystem.copyItem(at: tempDir.appendingPathComponent(originalName), to: newOutputPath)
-            print("📁 File already exists, renamed and saved as \(newOutputPath.path)")
+            print("✅ File already exists, try to rename as \(newOutputPath.path) | Size: \(sizeInfo) data")
         } else {
             try fileSystem.copyItem(at: tempDir.appendingPathComponent(originalName), to: outputPath)
-            print("📁 File saved as \(outputPath.path)")
+            print("✅ File saved as \(outputPath.path) | Size: \(sizeInfo) data")
         }
     }
 
