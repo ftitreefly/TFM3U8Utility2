@@ -25,6 +25,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - N/A
 
+## [1.2.0] - 2025-07-28
+
+### Added
+- Performance optimization features for task management
+- Streamlined state handling in OptimizedTaskManager
+- Enhanced architecture documentation
+
+### Changed
+- Optimized task state management with minimal overhead
+- Removed unused progress callback functionality
+- Streamlined intermediate state updates for better performance
+- Improved concurrent task execution efficiency
+- Enhanced logging integration throughout the codebase
+- Better separation of concerns in task management components
+
+### Deprecated
+- N/A
+
+### Removed
+- Unused progress callback field from TaskInfo struct
+- Intermediate state updates in executeTaskWithMetrics method
+- Unnecessary status updates in processMediaPlaylistOptimized method
+- Progress callback examples from documentation
+
+### Fixed
+- Task state synchronization issues
+- Memory overhead from unused state tracking
+- Performance bottlenecks in task management
+
+### Security
+- N/A
+
 ## [1.1.0] - 2025-07-25
 
 ### Added

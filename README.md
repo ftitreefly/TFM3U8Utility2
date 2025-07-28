@@ -14,6 +14,7 @@ A high-performance Swift library and CLI tool for downloading, parsing, and proc
 - 🎬 **Video Processing**: FFmpeg integration for video segment combination
 - 🔐 **Encryption Support**: Built-in support for encrypted M3U8 streams
 - 🧪 **Extensive Testing**: 8 comprehensive test suites covering all major functionality
+- ⚡ **Performance Optimized**: Streamlined task management with efficient state handling
 
 ## 📚 文档
 
@@ -38,7 +39,7 @@ Add TFM3U8Utility2 to your project dependencies:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/ftitreefly/TFM3U8Utility2.git", from: "1.0.0")
+    .package(url: "https://github.com/ftitreefly/TFM3U8Utility2.git", from: "1.2.0")
 ]
 ```
 
@@ -173,10 +174,6 @@ Logger.trace("Function call trace", category: .general)
 Logger.success("Download completed!", category: .download)
 Logger.warning("File already exists, will rename", category: .fileSystem)
 Logger.progress("Download progress: 75%", category: .download)
-
-// Legacy compatibility
-vprintf(verbose, "Debug information")
-vprintf(verbose, tab: 2, "Indented debug information")
 ```
 
 ### Output Examples
@@ -272,7 +269,7 @@ let config = DIConfiguration(
 
 - **TFM3U8Utility**: Main public API interface with comprehensive documentation
 - **M3U8Parser**: High-performance playlist parser supporting master and media playlists
-- **OptimizedTaskManager**: Concurrent task management with configurable limits
+- **OptimizedTaskManager**: Concurrent task management with configurable limits and streamlined state handling
 - **OptimizedVideoProcessor**: Video segment processing with FFmpeg integration
 - **DependencyContainer**: Full dependency injection system for modularity
 - **Logger**: Advanced logging system with multiple levels and categories
@@ -428,6 +425,12 @@ Video processing automatically detects and uses hardware acceleration when avail
 - Configurable log levels to reduce output in production
 - Efficient string formatting and output handling
 
+### Task Management Optimization
+
+- Streamlined task state management with minimal overhead
+- Efficient concurrent task execution with configurable limits
+- Optimized memory usage for large video processing operations
+
 ## 🧪 Testing
 
 Run the comprehensive test suite:
@@ -511,7 +514,24 @@ THE SOFTWARE.
 
 ## 📋 Changelog
 
+### Version 1.2.0 - 2025-07-28
+- ⚡ **Performance Optimization**: Streamlined task state management with minimal overhead
+- 🧹 **Code Cleanup**: Removed unused progress callback and intermediate state updates
+- 🎯 **Efficient Task Management**: Optimized concurrent task execution with better resource utilization
+- 📊 **Enhanced Logging**: Improved logging integration throughout the codebase
+- 🔧 **Architecture Improvements**: Better separation of concerns in task management components
+
 ### Version 1.1.0 - 2025-07-25
+- 🎉 Advanced logging system with multiple levels and categories
+- 🚀 Comprehensive logging configuration with production, development, and verbose modes
+- 📊 Log categories for better organization (Network, FileSystem, Parsing, Processing, etc.)
+- 🎨 Colored output support for better readability
+- ⏰ Timestamp and emoji support in log messages
+- 🔒 Thread-safe logging operations using Swift 6 concurrency
+- 🔄 Legacy compatibility with existing vprintf function
+- 📚 Detailed logging documentation and usage examples
+
+### Version 1.0.0 - 2025-07-21
 - 🎉 Initial release with Swift 6+ support
 - 🚀 High-performance M3U8 processing with concurrent downloads
 - 🖥️ CLI tool with download and info commands
