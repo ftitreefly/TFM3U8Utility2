@@ -41,9 +41,6 @@ public struct TaskInfo: Sendable {
     
     /// Performance metrics for the task
     var metrics: TaskMetrics
-    
-    /// Optional callback for progress updates
-    var progressCallback: ProgressCallback?
 }
 
 /// Performance metrics for a download task
@@ -119,12 +116,7 @@ public enum TaskStatus: Sendable {
 ///     baseUrl: nil,
 ///     savedDirectory: "/path/to/save",
 ///     fileName: "my-video",
-///     method: .web,
-///     progressCallback: { progress in
-///         print("Phase: \(progress.phase)")
-///         print("Progress: \(progress.overallProgress * 100)%")
-///         print("Status: \(progress.statusMessage)")
-///     }
+///     method: .web
 /// )
 /// 
 /// // Check task status
@@ -355,8 +347,6 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
         Logger.debug("Creating temporary directory: \(tempDir.path)", category: .fileSystem)
 
         // Step 1: Download and parse M3U8
-        taskInfo.status = TaskStatus.downloading(progress: 0.1)
-        
         let downloadStartTime = Date()
         let (content, effectiveBaseUrl) = try await downloadAndParseContent(taskInfo: taskInfo, verbose: verbose)
         guard !content.isEmpty else {
@@ -364,8 +354,6 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
         }
 
         // Step 2: Parse playlist
-        taskInfo.status = TaskStatus.downloading(progress: 0.2)
-        
         let parseResult = try parser.parseContent(content, baseURL: effectiveBaseUrl, type: .media)
         
         taskInfo.metrics.downloadDuration = Date().timeIntervalSince(downloadStartTime)
@@ -445,7 +433,6 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
         taskInfo.metrics.segmentCount = segmentURLs.count
         
         // Download segments with progress tracking
-        taskInfo.status = TaskStatus.downloading(progress: 0.3)
         try await downloadSegmentsWithProgress(segmentURLs, to: tempDir, taskInfo: &taskInfo, verbose: verbose)
         
         // Calculate and display total bytes processed
@@ -453,7 +440,6 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
         Logger.debug("Total processed: \(formatBytes(taskInfo.metrics.totalBytes)) data", category: .download)
 
         // Combine segments
-        taskInfo.status = TaskStatus.processing
         let outputPath = tempDir.appendingPathComponent(getOutputFileName(from: taskInfo.url, customName: nil))
         // check if m3u8 file is encrypted
         if !playlist.tags.keySegments.isEmpty {
