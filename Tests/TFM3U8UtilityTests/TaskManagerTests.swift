@@ -526,6 +526,7 @@ final class MockM3U8Parser: M3U8ParserServiceProtocol, @unchecked Sendable {
 final class MockVideoProcessor: VideoProcessorProtocol, @unchecked Sendable {
     var combineSegmentsCalled = false
     var decryptSegmentCalled = false
+    var decryptAndCombineSegmentsCalled = false
     var shouldFailCombine = false
     
     func combineSegments(in directory: URL, outputFile: URL) async throws {
@@ -546,6 +547,18 @@ final class MockVideoProcessor: VideoProcessorProtocol, @unchecked Sendable {
         // Create mock decrypted file
         let mockData = "mock decrypted data".data(using: .utf8)!
         try mockData.write(to: outputURL)
+    }
+    
+    func decryptAndCombineSegments(in directory: URL, with localM3U8FileName: String, outputFile: URL) async throws {
+        decryptAndCombineSegmentsCalled = true
+        
+        if shouldFailCombine {
+            throw ProcessingError.conversionFailed("Mock decrypt and combine failure")
+        }
+        
+        // Create mock output file
+        let mockData = "mock decrypted and combined video data".data(using: .utf8)!
+        try mockData.write(to: outputFile)
     }
 }
 

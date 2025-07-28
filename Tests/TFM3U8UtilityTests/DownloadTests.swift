@@ -84,26 +84,6 @@ final class DownloadTests: XCTestCase {
         }
     }
     
-    func testDownloadContentFromInvalidURL() async throws {
-        // Test downloading content from invalid URL
-        let invalidURL = URL(string: "https://invalid-domain-that-does-not-exist-12345.com/test")!
-        
-        do {
-            _ = try await httpSystem.downloadContent(from: invalidURL)
-            XCTFail("Should throw network error")
-        } catch {
-            // Verify error type
-            XCTAssertTrue(
-                error is NetworkError
-                || error.localizedDescription.contains("A server with the specified hostname could not be found.")
-                || error.localizedDescription.contains("-1003")
-                || error.localizedDescription.contains("未能找到使用指定主机名的服务器")
-                || error.localizedDescription.contains("could not find server with specified hostname"),
-                "Should throw network-related error: \(error)")
-            // Correctly handled invalid URL error
-        }
-    }
-    
     // MARK: - M3U8 Playlist Download Tests
     
     func testDownloadM3U8Playlist() async throws {

@@ -164,6 +164,32 @@ public protocol VideoProcessorProtocol: Sendable {
     ///   - `CommandExecutionError` if the external tool fails
     ///   - `FileSystemError` if file operations fail
     func decryptSegment(at url: URL, to outputURL: URL, keyURL: URL?) async throws
+
+    /// Decrypts and combines video segments into a single output file
+    /// 
+    /// This method decrypts an encrypted video segment and saves it to the specified
+    /// output location. It supports various encryption methods and automatically
+    /// detects hardware acceleration capabilities.
+    /// 
+    /// - Parameters:
+    ///   - directory: The directory containing the video segments
+    ///   - localM3U8FileName: The name of the local M3U8 file
+    ///   - outputFile: The URL where the combined video file will be saved
+    /// 
+    /// - Throws: 
+    ///   - `ProcessingError` if decryption fails
+    ///   - `CommandExecutionError` if the external tool fails
+    ///   - `FileSystemError` if file operations fail
+    /// 
+    /// ## Usage Example
+    /// ```swift
+    /// let segmentsDir = URL(fileURLWithPath: "/path/to/segments/")
+    /// let localM3U8FileName = "file.m3u8"
+    /// let outputVideo = URL(fileURLWithPath: "/path/to/output/video.mp4")
+    /// 
+    /// try await processor.decryptAndCombineSegments(in: segmentsDir, with: localM3U8FileName, outputFile: outputVideo) 
+    /// ```
+    func decryptAndCombineSegments(in directory: URL, with localM3U8FileName: String, outputFile: URL) async throws
 }
 
 /// Protocol for file system operations

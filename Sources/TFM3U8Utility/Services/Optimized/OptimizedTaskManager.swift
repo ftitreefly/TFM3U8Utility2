@@ -411,6 +411,13 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
             Logger.debug("Downloading from network: \(taskInfo.url.absoluteString)", category: .network)
             let content = try await downloader.downloadContent(from: taskInfo.url)
             let baseUrl = taskInfo.baseUrl ?? taskInfo.url.deletingLastPathComponent()
+
+            // save content to local file in temp directory
+            let localM3U8FileName = "file.m3u8"
+            let localM3U8File = tempDir.appendingPathComponent(localM3U8FileName)
+            try content.write(to: localM3U8File, atomically: true, encoding: .utf8)
+            Logger.debug("M3U8 content saved to \(localM3U8File.path)", category: .fileSystem)
+
             return (content, baseUrl)
         }
     }
@@ -447,10 +454,15 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
 
         // Combine segments
         taskInfo.status = TaskStatus.processing
-        
-        Logger.debug("Combining video segments...", category: .processing)
         let outputPath = tempDir.appendingPathComponent(getOutputFileName(from: taskInfo.url, customName: nil))
-        try await processor.combineSegments(in: tempDir, outputFile: outputPath)
+        // check if m3u8 file is encrypted
+        if !playlist.tags.keySegments.isEmpty {
+            Logger.debug("Decrypting video segments, and combining...", category: .processing)
+            try await processor.decryptAndCombineSegments(in: tempDir, with: "file.m3u8", outputFile: outputPath)
+        } else {
+            Logger.debug("Combining video segments...", category: .processing)
+            try await processor.combineSegments(in: tempDir, outputFile: outputPath)           
+        }
     }
     
     /// Process the final copy of the file

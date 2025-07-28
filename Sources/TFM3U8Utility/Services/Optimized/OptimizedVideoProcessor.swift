@@ -85,6 +85,10 @@ public struct OptimizedVideoProcessor: VideoProcessorProtocol {
     /// )
     /// ```
     public func combineSegments(in directory: URL, outputFile: URL) async throws {
+        guard let ffmpegCommand = configuration.ffmpegPath else {
+            throw ProcessingError.ffmpegNotFound()
+        }
+
         // Use concurrent file processing
         let segmentFiles = try await findSegmentFiles(in: directory)
         
@@ -96,17 +100,13 @@ public struct OptimizedVideoProcessor: VideoProcessorProtocol {
         let concatFile = try await createConcatFile(segments: segmentFiles, in: directory)
         
         // Use FFmpeg with optimized parameters
-        let arguments = buildOptimizedFFmpegArguments(concatFile: concatFile, outputFile: outputFile)
-        
-        guard let ffmpegCommand = configuration.ffmpegPath else {
-            throw ProcessingError.ffmpegNotFound()
-        }
+        let arguments = buildConcatSegmentsFFmpegArguments(concatFile: concatFile, outputFile: outputFile)
 
         _ = try await commandExecutor.execute(
             command: ffmpegCommand,
             arguments: arguments,
             workingDirectory: directory.path
-        )
+        )   
     }
     
     /// Decrypts a single video segment using the provided key
@@ -169,6 +169,46 @@ public struct OptimizedVideoProcessor: VideoProcessorProtocol {
             arguments: arguments,
             workingDirectory: outputURL.deletingLastPathComponent().path
         )
+    }
+
+    /// Decrypts and combines video segments into a single output file
+    /// 
+    /// This method decrypts an encrypted video segment and saves it to the specified
+    /// output location. It supports various encryption methods and automatically
+    /// detects hardware acceleration capabilities.
+    /// 
+    /// - Parameters:
+    ///   - directory: The directory containing the video segments
+    ///   - localM3U8FileName: The name of the local M3U8 file
+    ///   - outputFile: The URL where the combined video file will be saved
+    /// 
+    /// - Throws: 
+    ///   - `ProcessingError` with code 4007 if no segment files are found
+    ///   - `FileSystemError` if file operations fail
+    ///   - `CommandExecutionError` if FFmpeg execution fails
+    /// 
+    /// ## Usage Example
+    /// ```swift
+    /// let segmentsDir = URL(fileURLWithPath: "/path/to/segments/")
+    /// let localM3U8FileName = "file.m3u8"
+    /// let outputVideo = URL(fileURLWithPath: "/path/to/output/video.mp4")
+    /// 
+    /// try await processor.decryptAndCombineSegments(in: segmentsDir, with: localM3U8FileName, outputFile: outputVideo)
+    /// ```
+    public func decryptAndCombineSegments(in directory: URL, with localM3U8FileName: String, outputFile: URL) async throws {
+        guard let ffmpegCommand = configuration.ffmpegPath else {
+            throw ProcessingError.ffmpegNotFound()
+        }
+
+        let m3u8File = directory.appendingPathComponent(localM3U8FileName)
+
+        let arguments = await buildDecryptAndCombineSegmentsFFmpegArguments(m3u8File: m3u8File, outputFile: outputFile)
+
+        _ = try await commandExecutor.execute(
+            command: ffmpegCommand,
+            arguments: arguments,
+            workingDirectory: directory.path
+        )   
     }
     
     // MARK: - Private Optimized Methods
@@ -247,7 +287,7 @@ public struct OptimizedVideoProcessor: VideoProcessorProtocol {
     ///   - outputFile: The URL of the output video file
     /// 
     /// - Returns: An array of FFmpeg command-line arguments
-    private func buildOptimizedFFmpegArguments(concatFile: URL, outputFile: URL) -> [String] {
+    private func buildConcatSegmentsFFmpegArguments(concatFile: URL, outputFile: URL) -> [String] {
         var arguments = [
             "-f", "concat",
             "-safe", "0",
@@ -272,6 +312,49 @@ public struct OptimizedVideoProcessor: VideoProcessorProtocol {
         arguments.append(contentsOf: ["-v", "quiet", "-nostats"])
 #endif
         
+        return arguments
+    }
+
+    /// Builds optimized FFmpeg arguments for decrypting and combining video segments
+    /// 
+    /// This method creates an array of FFmpeg command-line arguments optimized
+    /// for fast and efficient video segment decryption and combination.
+    /// 
+    /// - Parameters:
+    ///   - m3u8File: The URL of the M3U8 file
+    ///   - outputFile: The URL of the output video file
+    /// 
+    /// - Returns: An array of FFmpeg command-line arguments
+    /// 
+    /// ## Usage Example
+    /// ```swift
+    /// let m3u8File = URL(fileURLWithPath: "/path/to/m3u8/file.m3u8")
+    /// let outputFile = URL(fileURLWithPath: "/path/to/output/video.mp4")
+    /// 
+    /// let arguments = await buildDecryptAndCombineSegmentsFFmpegArguments(m3u8File: m3u8File, outputFile: outputFile)
+    /// ```
+    private func buildDecryptAndCombineSegmentsFFmpegArguments(m3u8File: URL, outputFile: URL) async -> [String] {
+        var arguments = [
+            "-y", // Overwrite output file
+            "-protocol_whitelist", "file,http,https,tcp,tls,crypto",
+            "-allowed_extensions", "ALL"
+        ]
+
+        if await checkHardwareAcceleration() {
+            arguments.append(contentsOf: ["-hwaccel", "auto"])
+        }
+
+        arguments.append(contentsOf: [
+            "-i", m3u8File.path,
+            "-c", "copy",
+            outputFile.path
+        ])
+        
+        // Add quiet mode for production
+#if !DEBUG
+        arguments.append(contentsOf: ["-v", "quiet", "-nostats"])
+#endif
+
         return arguments
     }
     
