@@ -1,11 +1,12 @@
 //
 //  YouTubeExtractor.swift
-//  TFM3U8Utility
+//  M3U8CLI
 //
-//  Created by tree_fly on 2025/1/27.
+//  Moved from TFM3U8Utility Examples to CLI target to allow third-party implementations.
 //
 
 import Foundation
+import TFM3U8Utility
 
 /// Example YouTube-specific M3U8 link extractor
 /// 
@@ -29,6 +30,17 @@ import Foundation
 ///     options: LinkExtractionOptions.default
 /// )
 /// ```
+public protocol HTTPClientProtocol: Sendable {
+    func data(for request: URLRequest) async throws -> (Data, URLResponse)
+}
+
+public final class URLSessionHTTPClient: HTTPClientProtocol {
+    public init() {}
+    public func data(for request: URLRequest) async throws -> (Data, URLResponse) {
+        try await URLSession.shared.data(for: request)
+    }
+}
+
 public final class YouTubeExtractor: M3U8LinkExtractorProtocol {
     
     /// Supported YouTube domains
@@ -43,7 +55,7 @@ public final class YouTubeExtractor: M3U8LinkExtractorProtocol {
     private let apiPatterns = [
         #"ytInitialPlayerResponse\s*=\s*({.+?});"#,
         #"ytInitialData\s*=\s*({.+?});"#,
-        #"window\["ytInitialPlayerResponse"\]\s*=\s*({.+?});"#
+        #"window[\"ytInitialPlayerResponse\"]\s*=\s*({.+?});"#
     ]
     
     /// Video ID extraction patterns
@@ -53,8 +65,13 @@ public final class YouTubeExtractor: M3U8LinkExtractorProtocol {
         #"youtube\.com/embed/([a-zA-Z0-9_-]+)"#
     ]
     
+    /// Network client
+    private let httpClient: HTTPClientProtocol
+
     /// Initializes a new YouTube extractor
-    public init() {}
+    public init(httpClient: HTTPClientProtocol = URLSessionHTTPClient()) {
+        self.httpClient = httpClient
+    }
     
     /// Extracts M3U8 links from YouTube pages
     /// 
@@ -155,7 +172,7 @@ public final class YouTubeExtractor: M3U8LinkExtractorProtocol {
             request.setValue(value, forHTTPHeaderField: key)
         }
         
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await httpClient.data(for: request)
         
         guard let httpResponse = response as? HTTPURLResponse,
               httpResponse.statusCode == 200 else {
@@ -236,13 +253,8 @@ public final class YouTubeExtractor: M3U8LinkExtractorProtocol {
         var links: [M3U8Link] = []
         
         // This is a simplified implementation
-        // In a real implementation, you would need to:
-        // 1. Parse the JSON response
-        // 2. Navigate to streamingData.formats
-        // 3. Extract M3U8 URLs from each format
-        // 4. Extract quality and bandwidth information
+        // In a real implementation, you would need to parse the JSON response
         
-        // For demonstration, we'll create some example links
         let qualities = ["1080p", "720p", "480p", "360p"]
         let bandwidths = [5000000, 2500000, 1000000, 500000]
         
@@ -273,7 +285,6 @@ public final class YouTubeExtractor: M3U8LinkExtractorProtocol {
     /// Parses ytInitialData to extract M3U8 links
     private func parseInitialData(_ data: String, videoId: String) throws -> [M3U8Link] {
         // Similar to parsePlayerResponse, but for ytInitialData
-        // This would extract additional metadata like video title, duration, etc.
         return []
     }
     
@@ -328,13 +339,12 @@ public final class YouTubeExtractor: M3U8LinkExtractorProtocol {
     /// Sorts links by quality (highest first)
     private func sortByQuality(_ links: [M3U8Link]) -> [M3U8Link] {
         return links.sorted { link1, link2 in
-            // Sort by bandwidth (higher first)
             if let bandwidth1 = link1.bandwidth, let bandwidth2 = link2.bandwidth {
                 return bandwidth1 > bandwidth2
             }
-            
-            // Fallback to confidence
             return link1.confidence > link2.confidence
         }
     }
 }
+
+

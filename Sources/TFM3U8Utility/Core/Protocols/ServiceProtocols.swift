@@ -516,6 +516,9 @@ public protocol M3U8ExtractorRegistryProtocol: Sendable {
     /// 
     /// - Parameter extractor: The extractor to register
     func registerExtractor(_ extractor: M3U8LinkExtractorProtocol)
+
+    /// Registers a new link extractor with priority (higher wins). Optional extension API.
+    func registerExtractor(_ extractor: M3U8LinkExtractorProtocol, priority: Int)
     
     /// Extracts M3U8 links using the appropriate registered extractor
     /// 

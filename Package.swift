@@ -46,5 +46,15 @@ let package = Package(
             name: "TFM3U8UtilityTests",
             dependencies: ["TFM3U8Utility"]
         ),
+        .testTarget(
+            name: "M3U8CLITests",
+            dependencies: [
+                "M3U8CLI",
+                "TFM3U8Utility"
+            ],
+            swiftSettings: [
+                .enableExperimentalFeature("StrictConcurrency"),
+            ]
+        ),
     ]
 )

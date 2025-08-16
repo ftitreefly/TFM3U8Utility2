@@ -8,6 +8,7 @@
 import ArgumentParser
 import Foundation
 import TFM3U8Utility
+// Register site-specific extractors per-app (not in the library)
 
 /// Command for extracting M3U8 links from web pages
 /// 
@@ -108,6 +109,9 @@ struct ExtractCommand: ParsableCommand {
         
         // Create extractor registry
         let registry = DefaultM3U8ExtractorRegistry()
+        // Register CLI-provided extractors here (example: YouTube) with DI-friendly http client
+        let httpClient = URLSessionHTTPClient()
+        registry.registerExtractor(YouTubeExtractor(httpClient: httpClient))
         
         // Show extractor information if requested
         if showExtractors {
