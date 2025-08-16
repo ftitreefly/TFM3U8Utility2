@@ -68,4 +68,13 @@ public struct NetworkError: TFM3U8Error {
             url: url
         )
     }
+    
+    public static func invalidResponse(_ url: String) -> NetworkError {
+        NetworkError(
+            code: 1004,
+            underlyingError: nil,
+            message: "Invalid response from \(url)",
+            url: URL(string: url)
+        )
+    }
 } 

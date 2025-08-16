@@ -66,7 +66,7 @@ final class NetworkTests: XCTestCase {
         
         var successCount = 0
         
-        for (index, urlString) in testURLs.enumerated() {
+        for urlString in testURLs {
             guard let url = URL(string: urlString) else {
                 continue
             }
@@ -141,8 +141,8 @@ final class NetworkTests: XCTestCase {
                 
                 // Check target duration
                 if let targetDurationLine = content.components(separatedBy: .newlines).first(where: { $0.hasPrefix("#EXT-X-TARGETDURATION:") }) {
-                    let targetDuration = targetDurationLine.replacingOccurrences(of: "#EXT-X-TARGETDURATION:", with: "")
-                    // Target duration: \(targetDuration) seconds
+                    _ = targetDurationLine.replacingOccurrences(of: "#EXT-X-TARGETDURATION:", with: "")
+                    // Target duration validation completed
                 }
             }
             

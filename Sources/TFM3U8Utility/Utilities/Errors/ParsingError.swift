@@ -68,4 +68,13 @@ public struct ParsingError: TFM3U8Error {
             context: nil
         )
     }
+    
+    public static func invalidEncoding(_ url: String) -> ParsingError {
+        ParsingError(
+            code: 2004,
+            underlyingError: nil,
+            message: "Invalid encoding for content from \(url)",
+            context: "Failed to decode UTF-8 content"
+        )
+    }
 } 

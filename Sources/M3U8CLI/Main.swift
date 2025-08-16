@@ -22,7 +22,8 @@ struct M3U8Utility: AsyncParsableCommand {
         version: "1.1.0",
         subcommands: [
             DownloadCommand.self,
-            InfoCommand.self
+            InfoCommand.self,
+            ExtractCommand.self
         ]
     )
 }

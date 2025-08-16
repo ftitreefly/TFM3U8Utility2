@@ -123,6 +123,33 @@ public struct ProcessingError: TFM3U8Error {
             operation: "cancel"
         )
     }
+    
+    public static func noM3U8LinksFound(_ url: String) -> ProcessingError {
+        ProcessingError(
+            code: 4011,
+            underlyingError: nil,
+            message: "No M3U8 links found in: \(url)",
+            operation: "extraction"
+        )
+    }
+    
+    public static func invalidURL(_ url: String) -> ProcessingError {
+        ProcessingError(
+            code: 4012,
+            underlyingError: nil,
+            message: "Invalid URL: \(url)",
+            operation: "validation"
+        )
+    }
+    
+    public static func maxRetriesExceeded() -> ProcessingError {
+        ProcessingError(
+            code: 4013,
+            underlyingError: nil,
+            message: "Maximum retry attempts exceeded",
+            operation: "extraction"
+        )
+    }
 
     public init(code: Int, underlyingError: Error?, message: String, operation: String?) {
         self.code = code

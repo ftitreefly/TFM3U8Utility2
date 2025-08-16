@@ -429,3 +429,194 @@ public protocol CommandExecutorProtocol: Sendable {
     /// - Throws: `CommandExecutionError` if the command fails to execute
     func execute(command: String, arguments: [String], workingDirectory: String?) async throws -> String
 }
+
+/// Protocol for extracting M3U8 links from web pages
+/// 
+/// This protocol defines the interface for extracting M3U8 playlist URLs from
+/// web pages. It provides a unified way for third-party tools to extract
+/// streaming links from various websites and platforms.
+/// 
+/// ## Usage Example
+/// ```swift
+/// class MyLinkExtractor: M3U8LinkExtractorProtocol {
+///     func extractM3U8Links(from url: URL, options: LinkExtractionOptions) async throws -> [M3U8Link] {
+///         // Implementation for extracting M3U8 links from web page
+///     }
+///     
+///     func getSupportedDomains() -> [String] {
+///         return ["example.com", "video-site.com"]
+///     }
+/// }
+/// ```
+public protocol M3U8LinkExtractorProtocol: Sendable {
+    /// Extracts M3U8 links from a web page
+    /// 
+    /// This method analyzes a web page to find embedded M3U8 playlist URLs.
+    /// It should handle various extraction methods including:
+    /// - Direct M3U8 links in page source
+    /// - JavaScript variables containing M3U8 URLs
+    /// - API endpoints that return M3U8 playlists
+    /// - Dynamic content loaded via AJAX
+    /// 
+    /// - Parameters:
+    ///   - url: The URL of the web page to analyze
+    ///   - options: Configuration options for the extraction process
+    /// 
+    /// - Returns: Array of found M3U8 links with metadata
+    /// 
+    /// - Throws: 
+    ///   - `NetworkError` if the web page cannot be accessed
+    ///   - `ParsingError` if the page content cannot be parsed
+    ///   - `ProcessingError` if no M3U8 links are found
+    func extractM3U8Links(from url: URL, options: LinkExtractionOptions) async throws -> [M3U8Link]
+    
+    /// Returns a list of supported domains for this extractor
+    /// 
+    /// This method returns the list of domains that this extractor can handle.
+    /// It helps in routing requests to the appropriate extractor implementation.
+    /// 
+    /// - Returns: Array of supported domain names (e.g., ["youtube.com", "vimeo.com"])
+    func getSupportedDomains() -> [String]
+    
+    /// Checks if this extractor can handle the given URL
+    /// 
+    /// This method provides a quick way to determine if this extractor
+    /// is suitable for processing the given URL.
+    /// 
+    /// - Parameter url: The URL to check
+    /// 
+    /// - Returns: `true` if this extractor can handle the URL, `false` otherwise
+    func canHandle(url: URL) -> Bool
+}
+
+/// Protocol for managing multiple M3U8 link extractors
+/// 
+/// This protocol defines the interface for a registry that manages multiple
+/// link extractors and routes requests to the appropriate extractor based
+/// on the target URL.
+/// 
+/// ## Usage Example
+/// ```swift
+/// class MyExtractorRegistry: M3U8ExtractorRegistryProtocol {
+///     func registerExtractor(_ extractor: M3U8LinkExtractorProtocol) {
+///         // Implementation for registering extractors
+///     }
+///     
+///     func extractM3U8Links(from url: URL, options: LinkExtractionOptions) async throws -> [M3U8Link] {
+///         // Implementation for routing to appropriate extractor
+///     }
+/// }
+/// ```
+public protocol M3U8ExtractorRegistryProtocol: Sendable {
+    /// Registers a new link extractor
+    /// 
+    /// This method registers a link extractor that can handle specific domains
+    /// or URL patterns. The registry will use this extractor for URLs that
+    /// match its supported domains.
+    /// 
+    /// - Parameter extractor: The extractor to register
+    func registerExtractor(_ extractor: M3U8LinkExtractorProtocol)
+    
+    /// Extracts M3U8 links using the appropriate registered extractor
+    /// 
+    /// This method automatically selects the appropriate extractor based on
+    /// the URL and delegates the extraction to it.
+    /// 
+    /// - Parameters:
+    ///   - url: The URL of the web page to analyze
+    ///   - options: Configuration options for the extraction process
+    /// 
+    /// - Returns: Array of found M3U8 links with metadata
+    /// 
+    /// - Throws: 
+    ///   - `ProcessingError` if no suitable extractor is found
+    ///   - Various errors from the selected extractor
+    func extractM3U8Links(from url: URL, options: LinkExtractionOptions) async throws -> [M3U8Link]
+    
+    /// Gets a list of all registered extractors
+    /// 
+    /// This method returns information about all registered extractors,
+    /// useful for debugging and monitoring purposes.
+    /// 
+    /// - Returns: Array of extractor information
+    func getRegisteredExtractors() -> [ExtractorInfo]
+}
+
+/// Protocol for web page content analysis
+/// 
+/// This protocol defines the interface for analyzing web page content to
+/// extract various types of information, including M3U8 links, video metadata,
+/// and other streaming-related data.
+/// 
+/// ## Usage Example
+/// ```swift
+/// class MyPageAnalyzer: WebPageAnalyzerProtocol {
+///     func analyzePage(at url: URL, options: PageAnalysisOptions) async throws -> PageAnalysisResult {
+///         // Implementation for analyzing web page content
+///     }
+/// }
+/// ```
+public protocol WebPageAnalyzerProtocol: Sendable {
+    /// Analyzes a web page to extract streaming-related information
+    /// 
+    /// This method performs comprehensive analysis of a web page to find
+    /// streaming content, including M3U8 playlists, video metadata, and
+    /// other relevant information.
+    /// 
+    /// - Parameters:
+    ///   - url: The URL of the web page to analyze
+    ///   - options: Configuration options for the analysis
+    /// 
+    /// - Returns: Comprehensive analysis result with all found information
+    /// 
+    /// - Throws: 
+    ///   - `NetworkError` if the page cannot be accessed
+    ///   - `ParsingError` if the page content cannot be parsed
+    func analyzePage(at url: URL, options: PageAnalysisOptions) async throws -> PageAnalysisResult
+}
+
+/// Protocol for handling dynamic content and JavaScript execution
+/// 
+/// This protocol defines the interface for executing JavaScript code and
+/// handling dynamic content that may contain M3U8 links. It's particularly
+/// useful for modern web applications that load content dynamically.
+/// 
+/// ## Usage Example
+/// ```swift
+/// class MyJavaScriptExecutor: JavaScriptExecutorProtocol {
+///     func executeScript(_ script: String, in context: JavaScriptContext) async throws -> JavaScriptResult {
+///         // Implementation for executing JavaScript
+///     }
+/// }
+/// ```
+public protocol JavaScriptExecutorProtocol: Sendable {
+    /// Executes JavaScript code in a web page context
+    /// 
+    /// This method executes JavaScript code to extract information from
+    /// dynamic web pages, such as M3U8 URLs stored in JavaScript variables
+    /// or generated by client-side code.
+    /// 
+    /// - Parameters:
+    ///   - script: The JavaScript code to execute
+    ///   - context: The execution context (page URL, cookies, etc.)
+    /// 
+    /// - Returns: The result of JavaScript execution
+    /// 
+    /// - Throws: 
+    ///   - `ProcessingError` if JavaScript execution fails
+    ///   - `ParsingError` if the result cannot be parsed
+    func executeScript(_ script: String, in context: JavaScriptContext) async throws -> JavaScriptResult
+    
+    /// Creates a new JavaScript execution context
+    /// 
+    /// This method creates a new context for JavaScript execution with
+    /// the specified parameters.
+    /// 
+    /// - Parameters:
+    ///   - url: The base URL for the context
+    ///   - cookies: Optional cookies to include
+    ///   - headers: Optional HTTP headers to include
+    /// 
+    /// - Returns: A new JavaScript execution context
+    func createContext(url: URL, cookies: [String: String]?, headers: [String: String]?) -> JavaScriptContext
+}

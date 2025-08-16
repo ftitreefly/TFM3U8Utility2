@@ -52,6 +52,7 @@ public enum LogCategory: String, CaseIterable, Sendable {
     case taskManager = "TaskManager"
     case download = "Download"
     case cli = "CLI"
+    case extraction = "Extraction"
     
     var emoji: String {
         switch self {
@@ -63,6 +64,7 @@ public enum LogCategory: String, CaseIterable, Sendable {
         case .taskManager: return "🎯"
         case .download: return "⬇️"
         case .cli: return "💻"
+        case .extraction: return "🔗"
         }
     }
 }

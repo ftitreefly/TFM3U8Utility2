@@ -15,6 +15,7 @@ A high-performance Swift library and CLI tool for downloading, parsing, and proc
 - 🔐 **Encryption Support**: Built-in support for encrypted M3U8 streams
 - 🧪 **Extensive Testing**: 8 comprehensive test suites covering all major functionality
 - ⚡ **Performance Optimized**: Streamlined task management with efficient state handling
+- 🔗 **Third-Party Integration**: Unified protocol interface for extracting M3U8 links from web pages
 
 ## 📚 文档
 
@@ -23,6 +24,7 @@ A high-performance Swift library and CLI tool for downloading, parsing, and proc
 - **[完整文档](Docs/DOCUMENTATION.md)** - 详细的项目文档和架构说明
 - **[API 参考](Docs/API_REFERENCE.md)** - 完整的 API 文档
 - **[日志系统指南](Docs/LOGGING_GUIDE.md)** - 高级日志系统使用指南
+- **[第三方集成指南](Docs/THIRD_PARTY_INTEGRATION.md)** - 统一的第三方工具接口使用指南
 - **[贡献指南](Docs/CONTRIBUTING.md)** - 如何为项目贡献代码
 
 ## 🛠️ Installation
@@ -100,6 +102,15 @@ m3u8-utility download https://example.com/video.m3u8 -v
 
 # Show tool information and version
 m3u8-utility info
+
+# Extract M3U8 links from web pages
+m3u8-utility extract "https://example.com/video-page"
+
+# Extract with custom options
+m3u8-utility extract "https://example.com/video-page" \
+  --timeout 60 \
+  --methods direct-links,javascript-variables \
+  --verbose
 
 # Get help for all commands
 m3u8-utility --help
@@ -282,6 +293,10 @@ let config = DIConfiguration(
 - `TaskManagerProtocol`: Task coordination and progress tracking
 - `FileSystemServiceProtocol`: File operations with error handling
 - `CommandExecutorProtocol`: External command execution (FFmpeg, curl)
+- `M3U8LinkExtractorProtocol`: Unified interface for extracting M3U8 links from web pages
+- `M3U8ExtractorRegistryProtocol`: Registry for managing multiple link extractors
+- `WebPageAnalyzerProtocol`: Web page content analysis for streaming information
+- `JavaScriptExecutorProtocol`: JavaScript execution for dynamic content extraction
 
 ### Error Handling
 
@@ -396,6 +411,101 @@ Logger.debug("Initializing download manager", category: .taskManager)
 Logger.progress("Downloaded 10/50 segments", category: .download)
 Logger.success("Download completed successfully", category: .download)
 ```
+
+## 🔗 Third-Party Integration
+
+TFM3U8Utility2 provides a unified protocol interface for extracting M3U8 links from web pages, making it easy for third-party tools to integrate with various streaming platforms.
+
+### Quick Start
+
+```swift
+import TFM3U8Utility
+
+// Create extractor registry
+let registry = DefaultM3U8ExtractorRegistry()
+
+// Register custom extractors
+registry.registerExtractor(YouTubeExtractor())
+registry.registerExtractor(VimeoExtractor())
+
+// Extract M3U8 links from any web page
+let links = try await registry.extractM3U8Links(
+    from: URL(string: "https://youtube.com/watch?v=123")!,
+    options: LinkExtractionOptions.default
+)
+
+// Process extracted links
+for link in links {
+    print("Found M3U8: \(link.url)")
+    print("Quality: \(link.quality ?? "Unknown")")
+    print("Confidence: \(link.confidence)")
+}
+```
+
+### CLI Integration
+
+```bash
+# Extract M3U8 links from web pages
+m3u8-utility extract "https://example.com/video-page"
+
+# Extract with custom options
+m3u8-utility extract "https://example.com/video-page" \
+  --timeout 60 \
+  --methods direct-links,javascript-variables \
+  --user-agent "Custom Agent" \
+  --verbose
+
+# Save results to file
+m3u8-utility extract "https://example.com/video-page" \
+  --output links.txt \
+  --format json
+```
+
+### Creating Custom Extractors
+
+```swift
+public class MyCustomExtractor: M3U8LinkExtractorProtocol {
+    
+    private let supportedDomains = ["mysite.com"]
+    
+    public func extractM3U8Links(from url: URL, options: LinkExtractionOptions) async throws -> [M3U8Link] {
+        // Your custom extraction logic here
+        let content = try await downloadPageContent(from: url, options: options)
+        
+        // Extract M3U8 links using regex, JavaScript, or API calls
+        var links: [M3U8Link] = []
+        
+        // Example: Extract from JavaScript variables
+        let pattern = #"['"`](https?://[^'`"]+\.m3u8[^'`"]*)['"`]"#
+        let regex = try NSRegularExpression(pattern: pattern, options: [])
+        // ... implementation details
+        
+        return links
+    }
+    
+    public func getSupportedDomains() -> [String] {
+        return supportedDomains
+    }
+    
+    public func canHandle(url: URL) -> Bool {
+        guard let host = url.host else { return false }
+        return supportedDomains.contains { domain in
+            host.hasSuffix(domain) || host == domain
+        }
+    }
+}
+```
+
+### Supported Extraction Methods
+
+- **Direct Links**: Search for direct M3U8 links in page source
+- **JavaScript Variables**: Extract from JavaScript variables and objects
+- **API Endpoints**: Discover and call API endpoints that return M3U8 playlists
+- **Video Elements**: Parse HTML video elements for M3U8 sources
+- **Structured Data**: Extract from JSON-LD structured data
+- **Regular Expressions**: Use custom regex patterns for pattern matching
+
+For detailed third-party integration documentation, see [Third-Party Integration Guide](Docs/THIRD_PARTY_INTEGRATION.md).
 
 ## ⚡ Performance Optimization
 
