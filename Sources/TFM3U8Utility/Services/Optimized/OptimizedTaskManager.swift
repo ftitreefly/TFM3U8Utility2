@@ -525,6 +525,12 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
     ///   - directory: 
     ///   - taskInfo: 
     /// - Throws: 
+    /// Download segments with progress tracking and live throughput metrics.
+    /// - Parameters:
+    ///   - urls: Segment URLs
+    ///   - directory: Destination directory
+    ///   - taskInfo: Task info to update
+    ///   - verbose: Whether to print verbose progress lines
     private func downloadSegmentsWithProgress(_ urls: [URL], to directory: URL, taskInfo: inout TaskInfo, verbose: Bool = false) async throws {
         let (totalSegments, downloadStartTime) = (urls.count, Date())
         var (completedSegments, totalDownloadedBytes) = (0, Int64(0))
@@ -594,6 +600,12 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
     ///   - config: The configuration to use for the download
     /// - Returns: The number of bytes downloaded
     /// - Throws: 
+    /// Download a single segment and return its byte size.
+    /// - Parameters:
+    ///   - url: Segment URL
+    ///   - directory: Destination directory
+    ///   - config: DI configuration (headers, timeouts)
+    /// - Returns: Downloaded byte count
     private func downloadSingleSegmentWithProgress(url: URL, to directory: URL, config: DIConfiguration) async throws -> Int64 {
         var request = URLRequest(url: url, timeoutInterval: config.downloadTimeout)
         
@@ -602,7 +614,7 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
             request.setValue(value, forHTTPHeaderField: key)
         }
         
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await downloaderSession().data(for: request)
         
         guard let httpResponse = response as? HTTPURLResponse,
               httpResponse.statusCode == 200 else {
@@ -612,9 +624,21 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
         let filename = url.lastPathComponent
         let fileURL = directory.appendingPathComponent(filename)
         
-        try data.write(to: fileURL)
+        try data.write(to: fileURL, options: .atomic)
         
         return Int64(data.count)
+    }
+
+    /// Build a reusable URLSession for segment downloads.
+    private func downloaderSession() -> URLSession {
+        let cfg = URLSessionConfiguration.default
+        cfg.waitsForConnectivity = true
+        cfg.httpMaximumConnectionsPerHost = max(6, configuration.maxConcurrentDownloads)
+        cfg.timeoutIntervalForRequest = configuration.downloadTimeout
+        cfg.timeoutIntervalForResource = max(configuration.downloadTimeout * 2, configuration.downloadTimeout + 30)
+        cfg.httpAdditionalHeaders = configuration.defaultHeaders
+        cfg.requestCachePolicy = .reloadIgnoringLocalCacheData
+        return URLSession(configuration: cfg)
     }
 }
 

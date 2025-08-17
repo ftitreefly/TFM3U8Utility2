@@ -36,10 +36,14 @@ import Foundation
 ///     print("Confidence: \(link.confidence)")
 /// }
 /// ```
+/// Default implementation of a general-purpose M3U8 link extractor.
+///
+/// Notes: Reuses a single URLSession to avoid connection churn; supports custom headers and User-Agent.
 public final class DefaultM3U8LinkExtractor: M3U8LinkExtractorProtocol {
     
     /// Supported domains for this extractor
     private let supportedDomains: [String]
+    private let session: URLSession
     
     /// Regular expressions for M3U8 link detection
     private let m3u8Patterns: [String] = [
@@ -61,8 +65,11 @@ public final class DefaultM3U8LinkExtractor: M3U8LinkExtractorProtocol {
     /// Initializes a new default M3U8 link extractor
     /// 
     /// - Parameter supportedDomains: List of domains this extractor can handle
+    /// Initialize a default extractor
+    /// - Parameter supportedDomains: Domain whitelist; empty means all
     public init(supportedDomains: [String] = []) {
         self.supportedDomains = supportedDomains
+        self.session = DefaultM3U8LinkExtractor.makeSession()
     }
     
     /// Extracts M3U8 links from a web page
@@ -135,6 +142,11 @@ public final class DefaultM3U8LinkExtractor: M3U8LinkExtractorProtocol {
     // MARK: - Private Methods
     
     /// Downloads page content from the given URL
+    /// Download HTML content for a given page
+    /// - Parameters:
+    ///   - url: Page URL
+    ///   - options: Extraction options (timeout, headers, UA)
+    /// - Returns: UTF-8 content string
     private func downloadPageContent(from url: URL, options: LinkExtractionOptions) async throws -> String {
         var request = URLRequest(url: url)
         request.timeoutInterval = options.timeout
@@ -148,7 +160,7 @@ public final class DefaultM3U8LinkExtractor: M3U8LinkExtractorProtocol {
             request.setValue(value, forHTTPHeaderField: key)
         }
         
-        let (data, response) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await session.data(for: request)
         
         guard let httpResponse = response as? HTTPURLResponse,
               httpResponse.statusCode == 200 else {
@@ -160,6 +172,16 @@ public final class DefaultM3U8LinkExtractor: M3U8LinkExtractorProtocol {
         }
         
         return content
+    }
+
+    // MARK: - Session Factory
+    /// Build a reusable URLSession for extractor network requests
+    private static func makeSession() -> URLSession {
+        let cfg = URLSessionConfiguration.default
+        cfg.waitsForConnectivity = true
+        cfg.httpMaximumConnectionsPerHost = 12
+        cfg.requestCachePolicy = .reloadIgnoringLocalCacheData
+        return URLSession(configuration: cfg)
     }
     
     /// Extracts links using a specific method
