@@ -25,6 +25,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - N/A
 
+## [1.3.0] - 2025-01-27
+
+### Added
+- YouTube M3U8 link extractor for extracting streaming links from YouTube pages
+- Third-party integration support for extracting M3U8 links from web pages
+- Reusable URLSession implementation for enhanced M3U8 link extraction
+- M3U8 link extraction registry system for managing multiple extractors
+- Enhanced CLI extract command with comprehensive extraction options
+- Support for multiple extraction methods (direct-links, javascript-variables, api-endpoints)
+- Custom User-Agent and HTTP header support for extraction requests
+- JavaScript execution support for dynamic content extraction
+- Output format options (text, json, csv) for extracted links
+
+### Changed
+- Improved M3U8 link extraction architecture with plugin-style extractors
+- Enhanced CLI extract command with better error handling and progress reporting
+- Updated dependency injection to support extractor services
+- Improved network request handling with reusable URLSession instances
+
+### Deprecated
+- N/A
+
+### Removed
+- N/A
+
+### Fixed
+- N/A
+
+### Security
+- N/A
+
 ## [1.2.0] - 2025-07-28
 
 ### Added
