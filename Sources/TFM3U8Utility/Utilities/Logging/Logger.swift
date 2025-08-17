@@ -177,35 +177,34 @@ public struct LoggerConfiguration: Sendable {
 /// Logger.verbose("Detailed debug info", category: .parsing)
 /// ```
 public actor Logger {
-    // Instance state (actor-isolated)
-    /// Current logger configuration. Actor-isolated for concurrency safety.
-    private var configuration: LoggerConfiguration = .development()
-    /// Whether the logger has been explicitly configured. Defaults to false.
-    private var isConfigured = false
-
-    // Singleton actor instance to back static API
-    /// Singleton backing instance for the static API.
-    private static let shared = Logger()
-
-    // MARK: - Public Static API (kept for source compatibility)
-
-    /// Configure the logger with a specific configuration.
-    ///
-    /// - Parameter config: Configuration used by the logger.
-    ///
-    /// This schedules the configuration inside the actor to avoid race conditions.
+    /// The current configuration for the logger
+    private static var configuration: LoggerConfiguration = .development()
+    
+    /// Whether the logger has been configured
+    private static var isConfigured = false
+    
+    /// Thread-safe queue for logging operations
+    private static let logQueue = DispatchQueue(label: "com.tfm3u8utility.logger", qos: .utility)
+    
+    /// Configure the logger with a specific configuration
+    /// 
+    /// This method should be called once at application startup to configure
+    /// the logging behavior for the entire application.
+    /// 
+    /// - Parameter config: The configuration to use for logging
     public static func configure(_ config: LoggerConfiguration) {
-        Task { await shared.configureInstance(config) }
+        configuration = config
+        isConfigured = true
     }
-
+    
     /// Log a message at the error level
-    ///
+    /// 
     /// - Parameters:
     ///   - message: The message to log
-    ///   - category: Category of the log message (default: `.general`)
-    ///   - file: Source file (auto captured)
-    ///   - function: Source function (auto captured)
-    ///   - line: Source line number (auto captured)
+    ///   - category: The category of the log message (defaults to .general)
+    ///   - file: The source file (automatically captured)
+    ///   - function: The source function (automatically captured)
+    ///   - line: The source line number (automatically captured)
     public static func error(
         _ message: String,
         category: LogCategory = .general,
@@ -213,12 +212,17 @@ public actor Logger {
         function: String = #function,
         line: Int = #line
     ) {
-        Task { await shared.log(.error, message: message, category: category, file: file, function: function, line: line) }
+        log(.error, message: message, category: category, file: file, function: function, line: line)
     }
-
+    
     /// Log a message at the info level
-    ///
-    /// - Parameters are the same as `error`.
+    /// 
+    /// - Parameters:
+    ///   - message: The message to log
+    ///   - category: The category of the log message (defaults to .general)
+    ///   - file: The source file (automatically captured)
+    ///   - function: The source function (automatically captured)
+    ///   - line: The source line number (automatically captured)
     public static func info(
         _ message: String,
         category: LogCategory = .general,
@@ -226,12 +230,17 @@ public actor Logger {
         function: String = #function,
         line: Int = #line
     ) {
-        Task { await shared.log(.info, message: message, category: category, file: file, function: function, line: line) }
+        log(.info, message: message, category: category, file: file, function: function, line: line)
     }
-
+    
     /// Log a message at the debug level
-    ///
-    /// - Parameters are the same as `error`.
+    /// 
+    /// - Parameters:
+    ///   - message: The message to log
+    ///   - category: The category of the log message (defaults to .general)
+    ///   - file: The source file (automatically captured)
+    ///   - function: The source function (automatically captured)
+    ///   - line: The source line number (automatically captured)
     public static func debug(
         _ message: String,
         category: LogCategory = .general,
@@ -239,12 +248,17 @@ public actor Logger {
         function: String = #function,
         line: Int = #line
     ) {
-        Task { await shared.log(.debug, message: message, category: category, file: file, function: function, line: line) }
+        log(.debug, message: message, category: category, file: file, function: function, line: line)
     }
-
+    
     /// Log a message at the verbose level
-    ///
-    /// - Parameters are the same as `error`.
+    /// 
+    /// - Parameters:
+    ///   - message: The message to log
+    ///   - category: The category of the log message (defaults to .general)
+    ///   - file: The source file (automatically captured)
+    ///   - function: The source function (automatically captured)
+    ///   - line: The source line number (automatically captured)
     public static func verbose(
         _ message: String,
         category: LogCategory = .general,
@@ -252,12 +266,17 @@ public actor Logger {
         function: String = #function,
         line: Int = #line
     ) {
-        Task { await shared.log(.verbose, message: message, category: category, file: file, function: function, line: line) }
+        log(.verbose, message: message, category: category, file: file, function: function, line: line)
     }
-
+    
     /// Log a message at the trace level
-    ///
-    /// - Parameters are the same as `error`.
+    /// 
+    /// - Parameters:
+    ///   - message: The message to log
+    ///   - category: The category of the log message (defaults to .general)
+    ///   - file: The source file (automatically captured)
+    ///   - function: The source function (automatically captured)
+    ///   - line: The source line number (automatically captured)
     public static func trace(
         _ message: String,
         category: LogCategory = .general,
@@ -265,79 +284,75 @@ public actor Logger {
         function: String = #function,
         line: Int = #line
     ) {
-        Task { await shared.log(.trace, message: message, category: category, file: file, function: function, line: line) }
+        log(.trace, message: message, category: category, file: file, function: function, line: line)
     }
-
-    /// Log a success message (info level with success emoji formatting)
-    ///
+    
+    /// Log a success message (info level with success formatting)
+    /// 
     /// - Parameters:
     ///   - message: The message to log
-    ///   - category: Category of the log message (default: `.general`)
+    ///   - category: The category of the log message (defaults to .general)
     public static func success(
         _ message: String,
         category: LogCategory = .general
     ) {
-        Task { await shared.log(.info, message: "✅ \(message)", category: category) }
+        log(.info, message: "✅ \(message)", category: category)
     }
-
-    /// Log a warning message (info level with warning emoji formatting)
-    ///
+    
+    /// Log a warning message (info level with warning formatting)
+    /// 
     /// - Parameters:
     ///   - message: The message to log
-    ///   - category: Category of the log message (default: `.general`)
+    ///   - category: The category of the log message (defaults to .general)
     public static func warning(
         _ message: String,
         category: LogCategory = .general
     ) {
-        Task { await shared.log(.info, message: "⚠️  \(message)", category: category) }
+        log(.info, message: "⚠️  \(message)", category: category)
     }
-
-    /// Log a progress message (info level with progress emoji formatting)
-    ///
+    
+    /// Log a progress message (info level with progress formatting)
+    /// 
     /// - Parameters:
     ///   - message: The message to log
-    ///   - category: Category of the log message (default: `.general`)
+    ///   - category: The category of the log message (defaults to .general)
     public static func progress(
         _ message: String,
         category: LogCategory = .general
     ) {
-        Task { await shared.log(.info, message: "📊 \(message)", category: category) }
+        log(.info, message: "📊 \(message)", category: category)
     }
-
-    /// Legacy compatibility method (vprintf-like)
-    ///
-    /// When `verbose` is true, logs at the verbose level; otherwise produces no output.
+    
+    /// Legacy compatibility method for vprintf
+    /// 
+    /// This method provides backward compatibility with the existing vprintf function.
+    /// It logs at the verbose level when verbose is true, otherwise does nothing.
+    /// 
     /// - Parameters:
     ///   - verbose: Whether to log the message
     ///   - message: The message to log
-    ///   - category: Category of the log message (default: `.general`)
+    ///   - category: The category of the log message (defaults to .general)
     public static func vprintf(
         _ verbose: Bool,
         _ message: String,
         category: LogCategory = .general
     ) {
         guard verbose else { return }
-        Task { await shared.log(.verbose, message: message, category: category) }
+        log(.verbose, message: message, category: category)
     }
-
-    // MARK: - Actor-isolated instance methods
-
-    /// Configure logger instance inside actor isolation.
-    /// - Parameter config: Logger configuration.
-    private func configureInstance(_ config: LoggerConfiguration) {
-        configuration = config
-        isConfigured = true
-    }
-
+    
+    // MARK: - Private Methods
+    
     /// Internal logging method that handles the actual log output
+    /// 
     /// - Parameters:
     ///   - level: The log level
     ///   - message: The message to log
-    ///   - category: The category of the log message (default: `.general`)
-    ///   - file: The source file (auto captured)
-    ///   - function: The source function (auto captured)
-    ///   - line: The source line number (auto captured)
-    private func log(
+    ///   - category: The category of the log message
+    ///   - file: The source file
+    ///   - function: The source function
+    ///   - line: The source line number
+    private static func log(
         _ level: LogLevel,
         message: String,
         category: LogCategory = .general,
@@ -346,17 +361,22 @@ public actor Logger {
         line: Int = #line
     ) {
         guard isConfigured && level <= configuration.minimumLevel else { return }
-        let formattedMessage = formatMessage(
-            level: level,
-            message: message,
-            category: category,
-            fileAndLine: "\(file):\(line)",
-            function: function
-        )
-        print(formattedMessage)
+        
+        logQueue.async {
+            let formattedMessage = formatMessage(
+                level: level,
+                message: message,
+                category: category,
+                fileAndLine: "\(file):\(line)",
+                function: function
+            )
+            
+            print(formattedMessage)
+        }
     }
-
+    
     /// Format a log message according to the current configuration
+    /// 
     /// - Parameters:
     ///   - level: The log level
     ///   - message: The message to log
@@ -364,7 +384,7 @@ public actor Logger {
     ///   - fileAndLine: The source file and line number
     ///   - function: The source function
     /// - Returns: The formatted log message
-    private func formatMessage(
+    private static func formatMessage(
         level: LogLevel,
         message: String,
         category: LogCategory,
@@ -372,36 +392,42 @@ public actor Logger {
         function: String
     ) -> String {
         var components: [String] = []
-
+        
+        // Add timestamp if enabled
         if configuration.includeTimestamps {
             let formatter = DateFormatter()
             formatter.dateFormat = "HH:mm:ss.SSS"
             components.append(formatter.string(from: Date()))
         }
-
+        
+        // Add level indicator
         let levelIndicator = levelIndicator(for: level)
         components.append(levelIndicator)
-
+        
+        // Add category if enabled
         if configuration.includeCategories {
-            let categoryText = configuration.includeEmoji ?
-                "\(category.emoji)\(category.rawValue)" :
+            let categoryText = configuration.includeEmoji ? 
+                "\(category.emoji)\(category.rawValue)" : 
                 category.rawValue
             components.append("[\(categoryText)]")
         }
-
+        
+        // Add message
         components.append(message)
-
+        
+        // Add source location for debug and trace levels
         if level >= .debug && configuration.minimumLevel >= .debug {
             components.append("(\(fileAndLine))")
         }
-
+        
         return components.joined(separator: " ")
     }
-
-    /// Get the level indicator label for a given log level
+    
+    /// Get the level indicator for a log level
+    /// 
     /// - Parameter level: The log level
-    /// - Returns: A colored or plain indicator string depending on configuration
-    private func levelIndicator(for level: LogLevel) -> String {
+    /// - Returns: The level indicator string
+    private static func levelIndicator(for level: LogLevel) -> String {
         let baseIndicator: String
         switch level {
         case .none: baseIndicator = "NONE"
@@ -411,49 +437,32 @@ public actor Logger {
         case .verbose: baseIndicator = "VERBOSE"
         case .trace: baseIndicator = "TRACE"
         }
-
+        
         if configuration.enableColors {
             return colorize(baseIndicator, for: level)
         } else {
             return "[\(baseIndicator)]"
         }
     }
-
-    /// Add ANSI color to a level label
+    
+    /// Add color to a string based on log level
+    /// 
     /// - Parameters:
-    ///   - string: The label to colorize
+    ///   - string: The string to colorize
     ///   - level: The log level
-    /// - Returns: Colorized label wrapped by ANSI escape codes
-    private func colorize(_ string: String, for level: LogLevel) -> String {
+    /// - Returns: The colorized string
+    private static func colorize(_ string: String, for level: LogLevel) -> String {
         let colorCode: String
         switch level {
         case .none: colorCode = "0"
-        case .error: colorCode = "31"
-        case .info: colorCode = "32"
-        case .debug: colorCode = "34"
-        case .verbose: colorCode = "35"
-        case .trace: colorCode = "36"
+        case .error: colorCode = "31" // Red
+        case .info: colorCode = "32"  // Green
+        case .debug: colorCode = "34" // Blue
+        case .verbose: colorCode = "35" // Magenta
+        case .trace: colorCode = "36" // Cyan
         }
+        
         return "\u{001B}[\(colorCode)m[\(string)]\u{001B}[0m"
-    }
-
-    // Logs once with a temporary configuration without mutating global state
-    /// Log once with a temporary configuration without persisting any changes.
-    /// - Parameters:
-    ///   - tempConfig: Temporary configuration used only for this call
-    ///   - level: Log level
-    ///   - message: Log message
-    ///   - category: Log category
-    private func logTemporarily(
-        with tempConfig: LoggerConfiguration,
-        level: LogLevel,
-        message: String,
-        category: LogCategory
-    ) {
-        let original = configuration
-        configuration = tempConfig
-        log(level, message: message, category: category)
-        configuration = original
     }
 }
 
@@ -476,8 +485,9 @@ public extension Logger {
         category: LogCategory = .general,
         with config: LoggerConfiguration
     ) {
-        Task {
-            await shared.logTemporarily(with: config, level: level, message: message, category: category)
-        }
+        let originalConfig = configuration
+        configuration = config
+        log(level, message: message, category: category)
+        configuration = originalConfig
     }
 } 
