@@ -61,3 +61,6 @@ docs/build/
 # Backup files
 *.bak
 *.backup
+
+# Github Release files in release folder
+release/
