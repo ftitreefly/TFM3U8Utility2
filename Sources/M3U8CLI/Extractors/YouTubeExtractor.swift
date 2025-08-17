@@ -137,9 +137,21 @@ public final class YouTubeExtractor: M3U8LinkExtractorProtocol {
     
     /// Returns a list of supported domains for this extractor
     /// 
-    /// - Returns: Array of supported YouTube domain names
+    /// - Returns: Array of supported domain names
     public func getSupportedDomains() -> [String] {
         return supportedDomains
+    }
+    
+    /// Returns complete information about this extractor
+    /// 
+    /// - Returns: Complete extractor information
+    public func getExtractorInfo() -> ExtractorInfo {
+        return ExtractorInfo(
+            name: "YouTube Extractor",
+            version: "1.0.0",
+            supportedDomains: getSupportedDomains(),
+            capabilities: [.directLinks, .javascriptVariables, .apiEndpoints, .structuredData]
+        )
     }
     
     /// Checks if this extractor can handle the given URL

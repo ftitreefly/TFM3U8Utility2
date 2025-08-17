@@ -191,14 +191,10 @@ public final class DefaultM3U8LinkExtractor: M3U8LinkExtractorProtocol {
             return extractDirectLinks(from: content, baseURL: baseURL)
         case .javascriptVariables:
             return extractFromJavaScript(from: content, baseURL: baseURL)
-        case .apiEndpoints:
-            return extractFromAPIEndpoints(from: content, baseURL: baseURL)
         case .videoElements:
             return extractFromVideoElements(from: content, baseURL: baseURL)
-        case .structuredData:
-            return extractFromStructuredData(from: content, baseURL: baseURL)
-        case .regexPatterns:
-            return extractUsingRegex(from: content, baseURL: baseURL)
+        default:
+            return []
         }
     }
     
@@ -264,16 +260,6 @@ public final class DefaultM3U8LinkExtractor: M3U8LinkExtractorProtocol {
         return links
     }
     
-    /// Extracts M3U8 links from API endpoints
-    private func extractFromAPIEndpoints(from content: String, baseURL: URL) -> [M3U8Link] {
-        // This is a simplified implementation
-        // In a real implementation, you would need to:
-        // 1. Find API endpoints in the page
-        // 2. Make requests to those endpoints
-        // 3. Parse the responses for M3U8 links
-        return []
-    }
-    
     /// Extracts M3U8 links from HTML video elements
     private func extractFromVideoElements(from content: String, baseURL: URL) -> [M3U8Link] {
         var links: [M3U8Link] = []
@@ -310,22 +296,6 @@ public final class DefaultM3U8LinkExtractor: M3U8LinkExtractorProtocol {
         return links
     }
     
-    /// Extracts M3U8 links from structured data (JSON-LD)
-    private func extractFromStructuredData(from content: String, baseURL: URL) -> [M3U8Link] {
-        // This is a simplified implementation
-        // In a real implementation, you would need to:
-        // 1. Find JSON-LD scripts in the page
-        // 2. Parse the JSON data
-        // 3. Look for video content URLs
-        return []
-    }
-    
-    /// Extracts M3U8 links using custom regex patterns
-    private func extractUsingRegex(from content: String, baseURL: URL) -> [M3U8Link] {
-        // This method can be extended with custom patterns for specific sites
-        return []
-    }
-    
     /// Removes duplicate links based on URL
     private func removeDuplicates(from links: [M3U8Link]) -> [M3U8Link] {
         var seenURLs: Set<URL> = []
@@ -337,5 +307,22 @@ public final class DefaultM3U8LinkExtractor: M3U8LinkExtractorProtocol {
         }
         
         return uniqueLinks
+    }
+    
+    /// Returns complete information about this extractor
+    /// 
+    /// This method returns a complete ExtractorInfo struct containing
+    /// all metadata about this extractor. This allows the extractor
+    /// to provide accurate information about its capabilities and
+    /// supported domains.
+    /// 
+    /// - Returns: Complete extractor information
+    public func getExtractorInfo() -> ExtractorInfo {
+        return ExtractorInfo(
+            name: "Default M3U8 Link Extractor",
+            version: "1.0.0",
+            supportedDomains: supportedDomains.isEmpty ? ["*"] : supportedDomains,
+            capabilities: [.directLinks, .javascriptVariables, .videoElements]
+        )
     }
 }

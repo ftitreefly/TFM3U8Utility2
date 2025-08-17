@@ -19,11 +19,15 @@ struct M3U8Utility: AsyncParsableCommand {
         This tool supports downloading and parsing M3U8 video files.
         Supports downloading from URLs or processing local files.
         """,
-        version: "1.3.0",
+        version: CLI.version,
         subcommands: [
             DownloadCommand.self,
             InfoCommand.self,
             ExtractCommand.self
         ]
     )
+}
+
+enum CLI {
+    static let version = "1.3.0"
 }

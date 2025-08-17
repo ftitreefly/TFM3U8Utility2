@@ -446,6 +446,15 @@ public protocol CommandExecutorProtocol: Sendable {
 ///     func getSupportedDomains() -> [String] {
 ///         return ["example.com", "video-site.com"]
 ///     }
+///     
+///     func getExtractorInfo() -> ExtractorInfo {
+///         return ExtractorInfo(
+///             name: "My Link Extractor",
+///             version: "1.0.0",
+///             supportedDomains: getSupportedDomains(),
+///             capabilities: [.directLinks, .javascriptVariables, .apiEndpoints, .structuredData]
+///         )
+///     }
 /// }
 /// ```
 public protocol M3U8LinkExtractorProtocol: Sendable {
@@ -466,7 +475,7 @@ public protocol M3U8LinkExtractorProtocol: Sendable {
     /// 
     /// - Throws: 
     ///   - `NetworkError` if the web page cannot be accessed
-    ///   - `ParsingError` if the page content cannot be parsed
+    ///   - `ParsingError` if the content cannot be parsed
     ///   - `ProcessingError` if no M3U8 links are found
     func extractM3U8Links(from url: URL, options: LinkExtractionOptions) async throws -> [M3U8Link]
     
@@ -477,6 +486,16 @@ public protocol M3U8LinkExtractorProtocol: Sendable {
     /// 
     /// - Returns: Array of supported domain names (e.g., ["youtube.com", "vimeo.com"])
     func getSupportedDomains() -> [String]
+    
+    /// Returns complete information about this extractor
+    /// 
+    /// This method returns a complete ExtractorInfo struct containing
+    /// all metadata about this extractor. This allows the extractor
+    /// to provide accurate information about its capabilities and
+    /// supported domains.
+    /// 
+    /// - Returns: Complete extractor information
+    func getExtractorInfo() -> ExtractorInfo
     
     /// Checks if this extractor can handle the given URL
     /// 

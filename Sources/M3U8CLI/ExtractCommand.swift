@@ -32,19 +32,17 @@ import TFM3U8Utility
 ///   --output links.txt \
 ///   --format json
 /// ```
-struct ExtractCommand: ParsableCommand {
+struct ExtractCommand: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "extract",
-        abstract: "Extract M3U8 links from web pages using unified third-party interface",
+        abstract: "Extract M3U8 links from web pages using simplified methods",
         discussion: """
-        This command demonstrates the unified interface for extracting M3U8 links
-        from web pages. It supports multiple extraction methods and can handle
-        various platforms and websites.
+        This command extracts M3U8 playlist URLs from web pages using focused extraction methods.
+        Optimized for simplicity and effectiveness, supporting direct M3U8 links and JavaScript variables.
         
-        The command automatically selects the appropriate extractor based on the
-        target URL domain and provides comprehensive extraction capabilities.
+        The command automatically selects the appropriate extractor based on the target URL domain.
         """,
-        version: "1.0.0"
+        version: CLI.version
     )
     
     /// The URL of the web page to extract M3U8 links from
@@ -61,7 +59,7 @@ struct ExtractCommand: ParsableCommand {
     
     /// Extraction methods to use
     @Option(name: .long, help: "Extraction methods to use (comma-separated)")
-    var methods: String = "direct-links,javascript-variables,api-endpoints"
+    var methods: String = "direct-links,javascript-variables"
     
     /// Custom User-Agent string
     @Option(name: .long, help: "Custom User-Agent string")
@@ -174,20 +172,12 @@ struct ExtractCommand: ParsableCommand {
                 methods.append(.directLinks)
             case "javascript-variables":
                 methods.append(.javascriptVariables)
-            case "api-endpoints":
-                methods.append(.apiEndpoints)
-            case "video-elements":
-                methods.append(.videoElements)
-            case "structured-data":
-                methods.append(.structuredData)
-            case "regex-patterns":
-                methods.append(.regexPatterns)
             default:
                 print("⚠️  Unknown extraction method: \(trimmed)")
             }
         }
         
-        return methods.isEmpty ? [.directLinks, .javascriptVariables, .apiEndpoints] : methods
+        return methods.isEmpty ? [.directLinks, .javascriptVariables] : methods
     }
     
     /// Displays extraction results

@@ -79,18 +79,12 @@ public final class DefaultM3U8ExtractorRegistry: M3U8ExtractorRegistryProtocol, 
     public func registerExtractor(_ extractor: M3U8LinkExtractorProtocol, priority: Int) {
         let domains = extractor.getSupportedDomains()
         let name = String(describing: type(of: extractor))
-        let caps: [ExtractionMethod] = [.directLinks, .javascriptVariables, .apiEndpoints]
         
         func append(domain: String) {
-            let info = ExtractorInfo(
-                name: name,
-                version: "1.0.0",
-                supportedDomains: [domain],
-                capabilities: caps
-            )
-            let reg = Registration(domain: domain, priority: priority, extractor: extractor, info: info)
+            let extractorInfo = extractor.getExtractorInfo()
+            let reg = Registration(domain: domain, priority: priority, extractor: extractor, info: extractorInfo)
             registrations[domain, default: []].append(reg)
-            extractorMetadata["\(name)@\(domain)#\(priority)"] = info
+            extractorMetadata["\(extractorInfo.name)@\(domain)#\(priority)"] = extractorInfo
         }
         
         if domains.isEmpty {
@@ -126,12 +120,7 @@ public final class DefaultM3U8ExtractorRegistry: M3U8ExtractorRegistryProtocol, 
         let candidates = candidateRegistrations(forHost: host)
         
         // Ensure the default extractor is always considered at lowest priority
-        let defaultInfo = ExtractorInfo(
-            name: "Default M3U8 Extractor",
-            version: "1.0.0",
-            supportedDomains: ["*"],
-            capabilities: [.directLinks, .javascriptVariables, .apiEndpoints, .videoElements, .structuredData, .regexPatterns]
-        )
+        let defaultInfo = defaultExtractor.getExtractorInfo()
         let allCandidates: [Registration] = candidates.isEmpty ? [Registration(domain: "*", priority: Int.min, extractor: defaultExtractor, info: defaultInfo)] : candidates
         
         // Sort by priority (desc), then more specific domain first (longer string)
@@ -198,12 +187,7 @@ public final class DefaultM3U8ExtractorRegistry: M3U8ExtractorRegistryProtocol, 
     
     /// Registers the default extractor
     private func registerDefaultExtractor() {
-        let info = ExtractorInfo(
-            name: "Default M3U8 Extractor",
-            version: "1.0.0",
-            supportedDomains: ["*"],
-            capabilities: [.directLinks, .javascriptVariables, .apiEndpoints, .videoElements, .structuredData, .regexPatterns]
-        )
+        let info = defaultExtractor.getExtractorInfo()
         let reg = Registration(domain: "*", priority: Int.min, extractor: defaultExtractor, info: info)
         registrations["*", default: []].append(reg)
         extractorMetadata["Default@*#\(Int.min)"] = info

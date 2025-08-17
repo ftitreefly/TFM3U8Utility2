@@ -240,6 +240,92 @@ final class IntegrationTests: XCTestCase {
         
         // Memory management test passed
     }
+    
+    func testExtractorVersionFromProtocol() async throws {
+        // Test that extractor version comes from the extractor itself, not hardcoded
+        let registry = DefaultM3U8ExtractorRegistry()
+        
+        // Create a custom extractor with specific version
+        let customExtractor = CustomVersionExtractor(version: "2.5.0")
+        registry.registerExtractor(customExtractor)
+        
+        let extractors = registry.getRegisteredExtractors()
+        let customExtractorInfo = extractors.first { $0.name == "CustomVersionExtractor" }
+        
+        XCTAssertNotNil(customExtractorInfo)
+        XCTAssertEqual(customExtractorInfo?.version, "2.5.0")
+        XCTAssertNotEqual(customExtractorInfo?.version, "1.0.0") // Should not be hardcoded
+    }
+    
+    func testExtractorInfoFromProtocol() async throws {
+        // Test that ExtractorInfo comes from the extractor itself, not constructed by registry
+        let registry = DefaultM3U8ExtractorRegistry()
+        
+        let customExtractor = CustomInfoExtractor()
+        registry.registerExtractor(customExtractor)
+        
+        let extractors = registry.getRegisteredExtractors()
+        let customExtractorInfo = extractors.first { $0.name == "CustomInfoExtractor" }
+        
+        XCTAssertNotNil(customExtractorInfo)
+        XCTAssertEqual(customExtractorInfo?.version, "3.0.0")
+        XCTAssertEqual(customExtractorInfo?.supportedDomains, ["custom.com", "test.com"])
+        XCTAssertEqual(customExtractorInfo?.capabilities, [.directLinks, .javascriptVariables])
+    }
+    
+    // MARK: - Helper Classes
+    
+    private final class CustomVersionExtractor: M3U8LinkExtractorProtocol {
+        private let version: String
+        
+        init(version: String) {
+            self.version = version
+        }
+        
+        func extractM3U8Links(from url: URL, options: LinkExtractionOptions) async throws -> [M3U8Link] {
+            return []
+        }
+        
+        func getSupportedDomains() -> [String] {
+            return ["test.com"]
+        }
+        
+        func getExtractorInfo() -> ExtractorInfo {
+            return ExtractorInfo(
+                name: "CustomVersionExtractor",
+                version: version,
+                supportedDomains: getSupportedDomains(),
+                capabilities: [.directLinks]
+            )
+        }
+        
+        func canHandle(url: URL) -> Bool {
+            return true
+        }
+    }
+    
+    private final class CustomInfoExtractor: M3U8LinkExtractorProtocol {
+        func extractM3U8Links(from url: URL, options: LinkExtractionOptions) async throws -> [M3U8Link] {
+            return []
+        }
+        
+        func getSupportedDomains() -> [String] {
+            return ["custom.com", "test.com"]
+        }
+        
+        func getExtractorInfo() -> ExtractorInfo {
+            return ExtractorInfo(
+                name: "CustomInfoExtractor",
+                version: "3.0.0",
+                supportedDomains: getSupportedDomains(),
+                capabilities: [.directLinks, .javascriptVariables]
+            )
+        }
+        
+        func canHandle(url: URL) -> Bool {
+            return true
+        }
+    }
 }
 
 // MARK: - Test Helper Extensions

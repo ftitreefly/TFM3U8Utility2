@@ -47,7 +47,8 @@ struct DownloadCommand: AsyncParsableCommand {
         - Error handling and retry mechanisms
         
         Downloaded files will be saved to the user's Downloads directory by default.
-        """
+        """,
+        version: CLI.version
     )
     
     /// The URL of the M3U8 file to download
