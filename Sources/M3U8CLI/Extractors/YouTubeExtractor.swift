@@ -19,7 +19,6 @@ import TFM3U8Utility
 /// - Implements all required protocol methods
 /// - Demonstrates domain-based URL handling
 /// - Shows proper extractor metadata structure
-/// - Provides logging for debugging purposes
 /// 
 /// ## Usage Example
 /// ```swift
@@ -66,8 +65,7 @@ public final class YouTubeExtractor: M3U8LinkExtractorProtocol {
     
     /// Attempts to extract M3U8 links from a YouTube video page
     /// 
-    /// This method demonstrates the extraction interface by logging the request
-    /// and returning an empty array. In a production implementation, you would:
+    /// This method demonstrates the extraction interface by returning an empty array. In a production implementation, you would:
     /// 
     /// 1. Download the page content from the URL
     /// 2. Parse the HTML/JavaScript for M3U8 playlist URLs
@@ -75,7 +73,6 @@ public final class YouTubeExtractor: M3U8LinkExtractorProtocol {
     /// 4. Return structured M3U8 link data
     /// 
     /// ## Current Behavior
-    /// - Logs the extraction attempt for debugging
     /// - Always returns an empty array (no links found)
     /// - Never throws errors (simplified implementation)
     /// 
@@ -94,8 +91,6 @@ public final class YouTubeExtractor: M3U8LinkExtractorProtocol {
     /// 
     /// - Throws: Never throws in this simplified version
     public func extractM3U8Links(from url: URL, options: LinkExtractionOptions) async throws -> [M3U8Link] {
-        Logger.debug("YouTube extractor called for URL: \(url)", category: .extraction)
-        
         // For demonstration purposes, return empty array
         // In a production implementation, you would implement actual extraction logic here
         return []

@@ -22,6 +22,11 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
     var mockParser: MockM3U8Parser!
     var mockProcessor: MockVideoProcessor!
     var mockFileSystem: MockFileSystem!
+    
+    // Test configuration
+    var enableFastTesting: Bool = true // Set to false for slower, more realistic testing
+    // When enableFastTesting = true: downloadDelay = 0.1s, sleep = 0.05s
+    // When enableFastTesting = false: downloadDelay = 1.0s, sleep = 0.1s
 
     override func setUp() {
         super.setUp()
@@ -67,6 +72,9 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
         mockParser = MockM3U8Parser()
         mockProcessor = MockVideoProcessor()
         mockFileSystem = MockFileSystem()
+        
+        // Configure for fast testing
+        mockDownloader.enableDelay = !enableFastTesting
         
         let testConfiguration = DIConfiguration(
             maxConcurrentDownloads: 4,
@@ -186,8 +194,8 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
         mockParser.mockParseResults[expectedContent] = .media(try createMockMediaPlaylist())
         mockFileSystem.mockTempDirectory = tempDirectory
         
-        // Make download slow to test concurrency limits
-        mockDownloader.downloadDelay = 1.0
+        // Make download slow to test concurrency limits (reduced for faster testing)
+        mockDownloader.downloadDelay = 0.1
         
         // Test concurrent task limit by starting tasks simultaneously
         async let task1: Void = {
@@ -222,8 +230,8 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
             }
         }()
         
-        // Wait a moment to ensure first two tasks are started
-        try await Task.sleep(nanoseconds: 100_000_000) // 0.1 seconds
+        // Wait a moment to ensure first two tasks are started (reduced for faster testing)
+        try await Task.sleep(nanoseconds: 50_000_000) // 0.05 seconds
         
         // Third task should fail due to concurrent task limit
         do {
@@ -461,6 +469,7 @@ final class MockM3U8Downloader: M3U8DownloaderProtocol, @unchecked Sendable {
     var mockDataResults: [URL: Data] = [:]
     var mockErrors: [URL: Error] = [:]
     var downloadDelay: TimeInterval = 0
+    var enableDelay: Bool = true // Control whether to enable delay for faster testing
     
     var downloadContentCalled = false
     var downloadRawDataCalled = false
@@ -469,7 +478,7 @@ final class MockM3U8Downloader: M3U8DownloaderProtocol, @unchecked Sendable {
     func downloadContent(from url: URL) async throws -> String {
         downloadContentCalled = true
         
-        if downloadDelay > 0 {
+        if enableDelay && downloadDelay > 0 {
             try await Task.sleep(nanoseconds: UInt64(downloadDelay * 1_000_000_000))
         }
         

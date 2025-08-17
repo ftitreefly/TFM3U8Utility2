@@ -25,6 +25,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 - N/A
 
+## [1.3.1] - 2025-01-27
+
+### Added
+- Enhanced YouTube M3U8 link extractor with improved error handling
+- Simplified ExtractCommand structure for better maintainability
+- Optimized YouTubeExtractor demo implementation
+- Enhanced command structures with dynamic versioning support
+
+### Changed
+- Refactored ExtractCommand for clarity and demonstration purposes
+- Improved command structure architecture for better extensibility
+- Enhanced extractor capabilities with better error handling
+- Streamlined YouTubeExtractor implementation
+
+### Deprecated
+- N/A
+
+### Removed
+- N/A
+
+### Fixed
+- N/A
+
+### Security
+- N/A
+
 ## [1.3.0] - 2025-01-27
 
 ### Added
