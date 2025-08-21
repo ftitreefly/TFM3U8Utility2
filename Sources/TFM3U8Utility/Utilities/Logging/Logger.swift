@@ -177,6 +177,7 @@ public struct LoggerConfiguration: Sendable {
 /// Logger.verbose("Detailed debug info", category: .parsing)
 /// ```
 public actor Logger: LoggerProtocol {
+    public init() {}
     /// The current configuration for the logger
     private static var configuration: LoggerConfiguration = .development()
     
@@ -208,6 +209,9 @@ public actor Logger: LoggerProtocol {
     }
     nonisolated public func verbose(_ message: String, category: LogCategory) {
         Logger.verbose(message, category: category)
+    }
+    nonisolated public func warning(_ message: String, category: LogCategory) {
+        Logger.warning(message, category: category)
     }
     
     /// Log a message at the error level
@@ -504,3 +508,13 @@ public extension Logger {
         configuration = originalConfig
     }
 } 
+
+// Thin adapter to use static Logger via LoggerProtocol
+public struct LoggerAdapter: LoggerProtocol {
+    public init() {}
+    public func error(_ message: String, category: LogCategory) { Logger.error(message, category: category) }
+    public func info(_ message: String, category: LogCategory) { Logger.info(message, category: category) }
+    public func debug(_ message: String, category: LogCategory) { Logger.debug(message, category: category) }
+    public func verbose(_ message: String, category: LogCategory) { Logger.verbose(message, category: category) }
+    public func warning(_ message: String, category: LogCategory) { Logger.warning(message, category: category) }
+}

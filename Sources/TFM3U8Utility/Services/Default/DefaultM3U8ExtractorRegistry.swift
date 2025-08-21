@@ -55,8 +55,11 @@ public final class DefaultM3U8ExtractorRegistry: M3U8ExtractorRegistryProtocol, 
     /// Initializes a new extractor registry
     /// 
     /// - Parameter defaultExtractor: Default extractor to use when no specific extractor is found
-    public init(defaultExtractor: M3U8LinkExtractorProtocol = DefaultM3U8LinkExtractor()) {
+    private let logger: LoggerProtocol
+    
+    public init(defaultExtractor: M3U8LinkExtractorProtocol = DefaultM3U8LinkExtractor(), logger: LoggerProtocol = LoggerAdapter()) {
         self.defaultExtractor = defaultExtractor
+        self.logger = logger
         
         // Register the default extractor
         registerDefaultExtractor()
@@ -93,7 +96,7 @@ public final class DefaultM3U8ExtractorRegistry: M3U8ExtractorRegistryProtocol, 
             for domain in domains { append(domain: domain) }
         }
         
-        Logger.debug("Registered extractor: \(name) priority=\(priority) for domains: \(domains.isEmpty ? ["*"] : domains)", category: .extraction)
+        logger.debug("Registered extractor: \(name) priority=\(priority) for domains: \(domains.isEmpty ? ["*"] : domains)", category: .extraction)
     }
     
     /// Extracts M3U8 links using the appropriate registered extractor
@@ -129,7 +132,7 @@ public final class DefaultM3U8ExtractorRegistry: M3U8ExtractorRegistryProtocol, 
             return lhs.domain.count > rhs.domain.count
         }
         
-        Logger.debug("Extractor candidates for host \(host): \(sorted.map { "\($0.info.name)@\($0.domain)#\($0.priority)" }.joined(separator: ", "))", category: .extraction)
+        logger.debug("Extractor candidates for host \(host): \(sorted.map { "\($0.info.name)@\($0.domain)#\($0.priority)" }.joined(separator: ", "))", category: .extraction)
         
         // Run candidates concurrently, merge all successful results
         var collected: [[M3U8Link]] = []
@@ -280,7 +283,7 @@ extension DefaultM3U8ExtractorRegistry {
         extractorMetadata = extractorMetadata.filter { key, _ in
             return !key.contains("@\(domain)#")
         }
-        Logger.debug("Unregistered extractors for domain: \(domain)", category: .extraction)
+        logger.debug("Unregistered extractors for domain: \(domain)", category: .extraction)
     }
     
     /// Checks if an extractor is registered for a domain

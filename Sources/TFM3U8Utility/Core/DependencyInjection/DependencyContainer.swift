@@ -137,24 +137,24 @@ public final class DependencyContainer: Sendable {
     /// let taskManager = container.resolve(TaskManagerProtocol.self)
     /// ```
     public func configure(with configuration: DIConfiguration) {
+        // Configure global logger according to DI settings
+        Logger.configure(
+            LoggerConfiguration(
+                minimumLevel: configuration.logLevel,
+                includeTimestamps: false,
+                includeCategories: true,
+                includeEmoji: true,
+                enableColors: true
+            )
+        )
         registerSingleton(DIConfiguration.self) { configuration }
         registerSingleton(FileSystemServiceProtocol.self) { DefaultFileSystemService() }
         registerSingleton(PathProviderProtocol.self) { DefaultFileSystemService() }
         registerSingleton(CommandExecutorProtocol.self) { DefaultCommandExecutor() }
-        registerSingleton(NetworkClientProtocol.self) { [weak self] in
-            guard let self else { return DefaultNetworkClient(configuration: .performanceOptimized()) }
-            let config = try! self.resolve(DIConfiguration.self)
-            return DefaultNetworkClient(configuration: config)
+        registerSingleton(NetworkClientProtocol.self) {
+            DefaultNetworkClient(configuration: configuration)
         }
-        registerSingleton(LoggerProtocol.self) {
-            struct StaticLogger: LoggerProtocol {
-                func error(_ message: String, category: LogCategory) { Logger.error(message, category: category) }
-                func info(_ message: String, category: LogCategory) { Logger.info(message, category: category) }
-                func debug(_ message: String, category: LogCategory) { Logger.debug(message, category: category) }
-                func verbose(_ message: String, category: LogCategory) { Logger.verbose(message, category: category) }
-            }
-            return StaticLogger()
-        }
+        registerSingleton(LoggerProtocol.self) { LoggerAdapter() }
         
         register(M3U8DownloaderProtocol.self) { [weak self] in
             guard let self = self else {
@@ -184,6 +184,14 @@ public final class DependencyContainer: Sendable {
             )
         }
         
+        // Provide extractor registry with injected logger and network client
+        register(M3U8ExtractorRegistryProtocol.self) {
+            let net = DefaultNetworkClient(configuration: configuration)
+            return DefaultM3U8ExtractorRegistry(
+                defaultExtractor: DefaultM3U8LinkExtractor(networkClient: net)
+            )
+        }
+        
         register(TaskManagerProtocol.self) { [weak self] in
             guard let self = self else {
                 fatalError("Container deallocated during service creation")
@@ -195,7 +203,8 @@ public final class DependencyContainer: Sendable {
                 fileSystem: try! self.resolve(FileSystemServiceProtocol.self),
                 configuration: try! self.resolve(DIConfiguration.self),
                 maxConcurrentTasks: (try! self.resolve(DIConfiguration.self)).maxConcurrentDownloads / 4,
-                networkClient: try! self.resolve(NetworkClientProtocol.self)
+                networkClient: try! self.resolve(NetworkClientProtocol.self),
+                logger: LoggerAdapter()
             )
         }
     }

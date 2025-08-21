@@ -51,6 +51,9 @@ public struct DIConfiguration: Sendable {
     /// Base backoff (seconds) used for exponential retry delays
     public let retryBackoffBase: TimeInterval
     
+    /// Minimum log level for the logger
+    public let logLevel: LogLevel
+    
     /// Initializes a new configuration instance
     /// 
     /// - Parameters:
@@ -67,7 +70,8 @@ public struct DIConfiguration: Sendable {
         downloadTimeout: TimeInterval = 300,
         resourceTimeout: TimeInterval? = nil,
         retryAttempts: Int = 0,
-        retryBackoffBase: TimeInterval = 0.5
+        retryBackoffBase: TimeInterval = 0.5,
+        logLevel: LogLevel = .info
     ) {
         self.ffmpegPath = ffmpegPath
         self.curlPath = curlPath
@@ -77,6 +81,7 @@ public struct DIConfiguration: Sendable {
         self.resourceTimeout = resourceTimeout ?? downloadTimeout
         self.retryAttempts = max(0, retryAttempts)
         self.retryBackoffBase = max(0, retryBackoffBase)
+        self.logLevel = logLevel
     }
 }
 
@@ -121,7 +126,8 @@ extension DIConfiguration {
             downloadTimeout: 60,
             resourceTimeout: 120,
             retryAttempts: 2,
-            retryBackoffBase: 0.4
+            retryBackoffBase: 0.4,
+            logLevel: .debug
         )
     }
 }

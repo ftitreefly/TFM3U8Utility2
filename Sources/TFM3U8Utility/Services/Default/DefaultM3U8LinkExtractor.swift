@@ -43,7 +43,8 @@ public final class DefaultM3U8LinkExtractor: M3U8LinkExtractorProtocol {
     
     /// Supported domains for this extractor
     private let supportedDomains: [String]
-    private let session: URLSession
+    private let networkClient: NetworkClientProtocol
+    private let logger: LoggerProtocol
     
     /// Regular expressions for M3U8 link detection
     private let m3u8Patterns: [String] = [
@@ -67,9 +68,14 @@ public final class DefaultM3U8LinkExtractor: M3U8LinkExtractorProtocol {
     /// - Parameter supportedDomains: List of domains this extractor can handle
     /// Initialize a default extractor
     /// - Parameter supportedDomains: Domain whitelist; empty means all
-    public init(supportedDomains: [String] = []) {
+    public init(
+        supportedDomains: [String] = [],
+        networkClient: NetworkClientProtocol = DefaultNetworkClient(configuration: .performanceOptimized()),
+        logger: LoggerProtocol = LoggerAdapter()
+    ) {
         self.supportedDomains = supportedDomains
-        self.session = DefaultM3U8LinkExtractor.makeSession()
+        self.logger = logger
+        self.networkClient = networkClient
     }
     
     /// Extracts M3U8 links from a web page
@@ -88,7 +94,7 @@ public final class DefaultM3U8LinkExtractor: M3U8LinkExtractorProtocol {
     ///   - `ParsingError` if the page content cannot be parsed
     ///   - `ProcessingError` if no M3U8 links are found
     public func extractM3U8Links(from url: URL, options: LinkExtractionOptions) async throws -> [M3U8Link] {
-        Logger.debug("Starting M3U8 link extraction from: \(url)", category: .extraction)
+        logger.debug("Starting M3U8 link extraction from: \(url)", category: .extraction)
         
         var allLinks: [M3U8Link] = []
         
@@ -105,7 +111,7 @@ public final class DefaultM3U8LinkExtractor: M3U8LinkExtractorProtocol {
         let uniqueLinks = removeDuplicates(from: allLinks)
         let sortedLinks = uniqueLinks.sorted { $0.confidence > $1.confidence }
         
-        Logger.debug("Found \(sortedLinks.count) unique M3U8 links", category: .extraction)
+        logger.debug("Found \(sortedLinks.count) unique M3U8 links", category: .extraction)
         
         guard !sortedLinks.isEmpty else {
             throw ProcessingError.noM3U8LinksFound(url.absoluteString)
@@ -160,7 +166,7 @@ public final class DefaultM3U8LinkExtractor: M3U8LinkExtractorProtocol {
             request.setValue(value, forHTTPHeaderField: key)
         }
         
-        let (data, response) = try await session.data(for: request)
+        let (data, response) = try await networkClient.data(for: request)
         
         guard let httpResponse = response as? HTTPURLResponse,
               httpResponse.statusCode == 200 else {
@@ -174,15 +180,7 @@ public final class DefaultM3U8LinkExtractor: M3U8LinkExtractorProtocol {
         return content
     }
 
-    // MARK: - Session Factory
-    /// Build a reusable URLSession for extractor network requests
-    private static func makeSession() -> URLSession {
-        let cfg = URLSessionConfiguration.default
-        cfg.waitsForConnectivity = true
-        cfg.httpMaximumConnectionsPerHost = 12
-        cfg.requestCachePolicy = .reloadIgnoringLocalCacheData
-        return URLSession(configuration: cfg)
-    }
+    // MARK: - Network
     
     /// Extracts links using a specific method
     private func extractLinksUsingMethod(_ method: ExtractionMethod, from content: String, baseURL: URL, options: LinkExtractionOptions) async throws -> [M3U8Link] {
@@ -222,7 +220,7 @@ public final class DefaultM3U8LinkExtractor: M3U8LinkExtractorProtocol {
                     }
                 }
             } catch {
-                Logger.warning("Failed to compile regex pattern: \(pattern)", category: .extraction)
+                logger.warning("Failed to compile regex pattern: \(pattern)", category: .extraction)
             }
         }
         
@@ -253,7 +251,7 @@ public final class DefaultM3U8LinkExtractor: M3U8LinkExtractorProtocol {
                     }
                 }
             } catch {
-                Logger.warning("Failed to compile JavaScript regex pattern: \(pattern)", category: .extraction)
+                logger.warning("Failed to compile JavaScript regex pattern: \(pattern)", category: .extraction)
             }
         }
         
@@ -289,7 +287,7 @@ public final class DefaultM3U8LinkExtractor: M3U8LinkExtractorProtocol {
                     }
                 }
             } catch {
-                Logger.warning("Failed to compile video element regex pattern: \(pattern)", category: .extraction)
+                logger.warning("Failed to compile video element regex pattern: \(pattern)", category: .extraction)
             }
         }
         

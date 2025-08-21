@@ -100,7 +100,8 @@ public struct TFM3U8Utility {
         
         await GlobalDependencies.shared.configure(with: configuration)
         
-        Logger.debug("Concurrent file downloads count: \(configuration.maxConcurrentDownloads), single file download timeout: \(configuration.downloadTimeout) seconds", category: .download)
+        let log = try await GlobalDependencies.shared.resolve(LoggerProtocol.self)
+        log.debug("Concurrent file downloads count: \(configuration.maxConcurrentDownloads), single file download timeout: \(configuration.downloadTimeout) seconds", category: .download)
         // Use dependency injection for file system operations
         let fileSystem = try await GlobalDependencies.shared.resolve(FileSystemServiceProtocol.self)
         

@@ -655,6 +655,7 @@ public protocol LoggerProtocol: Sendable {
     func info(_ message: String, category: LogCategory)
     func debug(_ message: String, category: LogCategory)
     func verbose(_ message: String, category: LogCategory)
+    func warning(_ message: String, category: LogCategory)
 }
 
 /// Protocol for providing well-known filesystem paths

@@ -144,6 +144,9 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
     /// Network client for HTTP operations
     private let networkClient: NetworkClientProtocol
     
+    /// Logger instance injected via DI
+    private let logger: LoggerProtocol
+    
     /// Temporary directory for processing files
     private var tempDir: URL = FileManager.default.temporaryDirectory
     
@@ -182,7 +185,8 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
         fileSystem: FileSystemServiceProtocol,
         configuration: DIConfiguration = .performanceOptimized(),
         maxConcurrentTasks: Int = 3,
-        networkClient: NetworkClientProtocol
+        networkClient: NetworkClientProtocol,
+        logger: LoggerProtocol
     ) {
         self.downloader = downloader
         self.parser = parser
@@ -191,6 +195,7 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
         self.configuration = configuration
         self.maxConcurrentTasks = maxConcurrentTasks
         self.networkClient = networkClient
+        self.logger = logger
     }
     
     /// Creates and executes a new download task
@@ -227,10 +232,10 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
         let taskId = generateTaskId(for: request.url)
         activeTasksCount += 1
         
-        Logger.debug("Current active tasks: \(activeTasksCount)/\(maxConcurrentTasks)", category: .taskManager)
+        logger.debug("Current active tasks: \(activeTasksCount)/\(maxConcurrentTasks)", category: .taskManager)
         defer {
             activeTasksCount -= 1
-            Logger.debug("Task completed, current active tasks: \(activeTasksCount)/\(maxConcurrentTasks)", category: .taskManager)
+            logger.debug("Task completed, current active tasks: \(activeTasksCount)/\(maxConcurrentTasks)", category: .taskManager)
         }
         
         var taskInfo = TaskInfo(
@@ -349,7 +354,7 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
         _ = Date() // Mark start time for potential future metrics
         self.tempDir = try fileSystem.createTemporaryDirectory(taskInfo.url.absoluteString)
         
-        Logger.debug("Creating temporary directory: \(tempDir.path)", category: .fileSystem)
+        logger.debug("Creating temporary directory: \(tempDir.path)", category: .fileSystem)
 
         // Step 1: Download and parse M3U8
         let downloadStartTime = Date()
@@ -379,11 +384,11 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
         
         // Step 4: Copy file
         try processCopyFile(taskInfo)
-        Logger.debug("File saved to \(taskInfo.savedDirectory) | Size: \(formatBytes(taskInfo.metrics.totalBytes)) data", category: .fileSystem)
+        logger.debug("File saved to \(taskInfo.savedDirectory) | Size: \(formatBytes(taskInfo.metrics.totalBytes)) data", category: .fileSystem)
 
         // Step 5: Clean up
         try fileSystem.removeItem(at: tempDir.path)
-        Logger.debug("Cleaned up temporary directory: \(tempDir.path)", category: .fileSystem)
+        logger.debug("Cleaned up temporary directory: \(tempDir.path)", category: .fileSystem)
     }
     
     /// Download and parse content from the task
@@ -396,12 +401,12 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
     ///   - verbose: Whether to output detailed information
     private func downloadAndParseContent(taskInfo: TaskInfo, verbose: Bool = false) async throws -> (String, URL) {
         if case .local = taskInfo.method {
-            Logger.debug("Reading from local file: \(taskInfo.url.path)", category: .fileSystem)
+            logger.debug("Reading from local file: \(taskInfo.url.path)", category: .fileSystem)
             let content = try fileSystem.content(atPath: taskInfo.url.path)
             let baseUrl = taskInfo.baseUrl ?? taskInfo.url.deletingLastPathComponent()
             return (content, baseUrl)
         } else {
-            Logger.debug("Downloading from network: \(taskInfo.url.absoluteString)", category: .network)
+            logger.debug("Downloading from network: \(taskInfo.url.absoluteString)", category: .network)
             let content = try await downloader.downloadContent(from: taskInfo.url)
             let baseUrl = taskInfo.baseUrl ?? taskInfo.url.deletingLastPathComponent()
 
@@ -409,7 +414,7 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
             let localM3U8FileName = "file.m3u8"
             let localM3U8File = tempDir.appendingPathComponent(localM3U8FileName)
             try content.write(to: localM3U8File, atomically: true, encoding: .utf8)
-            Logger.debug("M3U8 content saved to \(localM3U8File.path)", category: .fileSystem)
+            logger.debug("M3U8 content saved to \(localM3U8File.path)", category: .fileSystem)
 
             return (content, baseUrl)
         }
@@ -442,16 +447,16 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
         
         // Calculate and display total bytes processed
         taskInfo.metrics.totalBytes = try await calculateTotalBytes(in: tempDir)
-        Logger.debug("Total processed: \(formatBytes(taskInfo.metrics.totalBytes)) data", category: .download)
+        logger.debug("Total processed: \(formatBytes(taskInfo.metrics.totalBytes)) data", category: .download)
 
         // Combine segments
         let outputPath = tempDir.appendingPathComponent(getOutputFileName(from: taskInfo.url, customName: nil))
         // check if m3u8 file is encrypted
         if !playlist.tags.keySegments.isEmpty {
-            Logger.debug("Decrypting video segments, and combining...", category: .processing)
+            logger.debug("Decrypting video segments, and combining...", category: .processing)
             try await processor.decryptAndCombineSegments(in: tempDir, with: "file.m3u8", outputFile: outputPath)
         } else {
-            Logger.debug("Combining video segments...", category: .processing)
+            logger.debug("Combining video segments...", category: .processing)
             try await processor.combineSegments(in: tempDir, outputFile: outputPath)           
         }
     }
