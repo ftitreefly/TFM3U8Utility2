@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Darwin
 
 // MARK: - Log Level
 
@@ -176,16 +177,32 @@ public struct LoggerConfiguration: Sendable {
 /// // Conditional logging
 /// Logger.verbose("Detailed debug info", category: .parsing)
 /// ```
-public actor Logger: LoggerProtocol {
+public struct Logger: LoggerProtocol {
     public init() {}
-    /// The current configuration for the logger
-    private static var configuration: LoggerConfiguration = .development()
+    /// The current configuration for the logger (accessed via configQueue)
+    // Configuration is managed by LoggerState below
     
-    /// Whether the logger has been configured
-    private static var isConfigured = false
-    
-    /// Thread-safe queue for logging operations
+    /// Thread-safe queue for emitting logs
     private static let logQueue = DispatchQueue(label: "com.tfm3u8utility.logger", qos: .utility)
+
+    /// Internal state container for configuration (serialized access)
+    private final class LoggerState: @unchecked Sendable {
+        private var configuration: LoggerConfiguration = .development()
+        private let queue = DispatchQueue(label: "com.tfm3u8utility.logger.config", qos: .utility)
+        func getConfig() -> LoggerConfiguration { queue.sync { configuration } }
+        func setConfig(_ cfg: LoggerConfiguration) { queue.sync { configuration = cfg } }
+    }
+    private static let state = LoggerState()
+    
+    /// TTY detection for color/emoji output
+    private static let stdoutIsTTY: Bool = (isatty(STDOUT_FILENO) != 0)
+    
+    /// Cached DateFormatter (used only on logQueue)
+    private static let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "HH:mm:ss.SSS"
+        return formatter
+    }()
     
     /// Configure the logger with a specific configuration
     /// 
@@ -194,8 +211,7 @@ public actor Logger: LoggerProtocol {
     /// 
     /// - Parameter config: The configuration to use for logging
     public static func configure(_ config: LoggerConfiguration) {
-        configuration = config
-        isConfigured = true
+        state.setConfig(config)
     }
 
     nonisolated public func error(_ message: String, category: LogCategory) {
@@ -225,7 +241,7 @@ public actor Logger: LoggerProtocol {
     public static func error(
         _ message: String,
         category: LogCategory = .general,
-        file: String = #file,
+        file: String = #fileID,
         function: String = #function,
         line: Int = #line
     ) {
@@ -243,7 +259,7 @@ public actor Logger: LoggerProtocol {
     public static func info(
         _ message: String,
         category: LogCategory = .general,
-        file: String = #file,
+        file: String = #fileID,
         function: String = #function,
         line: Int = #line
     ) {
@@ -261,7 +277,7 @@ public actor Logger: LoggerProtocol {
     public static func debug(
         _ message: String,
         category: LogCategory = .general,
-        file: String = #file,
+        file: String = #fileID,
         function: String = #function,
         line: Int = #line
     ) {
@@ -279,7 +295,7 @@ public actor Logger: LoggerProtocol {
     public static func verbose(
         _ message: String,
         category: LogCategory = .general,
-        file: String = #file,
+        file: String = #fileID,
         function: String = #function,
         line: Int = #line
     ) {
@@ -297,7 +313,7 @@ public actor Logger: LoggerProtocol {
     public static func trace(
         _ message: String,
         category: LogCategory = .general,
-        file: String = #file,
+        file: String = #fileID,
         function: String = #function,
         line: Int = #line
     ) {
@@ -359,7 +375,9 @@ public actor Logger: LoggerProtocol {
         function: String = #function,
         line: Int = #line
     ) {
-        guard isConfigured && level <= configuration.minimumLevel else { return }
+        // Snapshot configuration safely
+        let cfg = state.getConfig()
+        guard level <= cfg.minimumLevel else { return }
         
         logQueue.async {
             let formattedMessage = formatMessage(
@@ -367,9 +385,9 @@ public actor Logger: LoggerProtocol {
                 message: message,
                 category: category,
                 fileAndLine: "\(file):\(line)",
-                function: function
+                function: function,
+                cfg: cfg
             )
-            
             print(formattedMessage)
         }
     }
@@ -388,24 +406,23 @@ public actor Logger: LoggerProtocol {
         message: String,
         category: LogCategory,
         fileAndLine: String,
-        function: String
+        function: String,
+        cfg: LoggerConfiguration
     ) -> String {
         var components: [String] = []
         
-        // Add timestamp if enabled
-        if configuration.includeTimestamps {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "HH:mm:ss.SSS"
-            components.append(formatter.string(from: Date()))
+        // Add timestamp if enabled (formatter used only on logQueue)
+        if cfg.includeTimestamps {
+            components.append(dateFormatter.string(from: Date()))
         }
         
         // Add level indicator
-        let levelIndicator = levelIndicator(for: level)
+        let levelIndicator = levelIndicator(for: level, cfg: cfg)
         components.append(levelIndicator)
         
         // Add category if enabled
-        if configuration.includeCategories {
-            let categoryText = configuration.includeEmoji ? 
+        if cfg.includeCategories {
+            let categoryText = (cfg.includeEmoji && stdoutIsTTY) ? 
                 "\(category.emoji)\(category.rawValue)" : 
                 category.rawValue
             components.append("[\(categoryText)]")
@@ -415,7 +432,7 @@ public actor Logger: LoggerProtocol {
         components.append(message)
         
         // Add source location for debug and trace levels
-        if level >= .debug && configuration.minimumLevel >= .debug {
+        if level >= .debug && cfg.minimumLevel >= .debug {
             components.append("(\(fileAndLine))")
         }
         
@@ -426,7 +443,7 @@ public actor Logger: LoggerProtocol {
     /// 
     /// - Parameter level: The log level
     /// - Returns: The level indicator string
-    private static func levelIndicator(for level: LogLevel) -> String {
+    private static func levelIndicator(for level: LogLevel, cfg: LoggerConfiguration) -> String {
         let baseIndicator: String
         switch level {
         case .none: baseIndicator = "NONE"
@@ -437,7 +454,7 @@ public actor Logger: LoggerProtocol {
         case .trace: baseIndicator = "TRACE"
         }
         
-        if configuration.enableColors {
+        if cfg.enableColors && stdoutIsTTY {
             return colorize(baseIndicator, for: level)
         } else {
             return "[\(baseIndicator)]"
@@ -484,10 +501,16 @@ public extension Logger {
         category: LogCategory = .general,
         with config: LoggerConfiguration
     ) {
-        let originalConfig = configuration
-        configuration = config
-        log(level, message: message, category: category)
-        configuration = originalConfig
+        // Emit with a temporary configuration without mutating global state
+        let formatted = Logger.formatMessage(
+            level: level,
+            message: message,
+            category: category,
+            fileAndLine: "",
+            function: "",
+            cfg: config
+        )
+        Logger.logQueue.async { print(formatted) }
     }
 } 
 
