@@ -253,8 +253,8 @@ public struct DefaultNetworkClient: NetworkClientProtocol {
     
     public func data(for request: URLRequest) async throws -> (Data, URLResponse) {
         var req = request
-        for (k, v) in defaultHeaders where req.value(forHTTPHeaderField: k) == nil {
-            req.setValue(v, forHTTPHeaderField: k)
+        for (key, value) in defaultHeaders where req.value(forHTTPHeaderField: key) == nil {
+            req.setValue(value, forHTTPHeaderField: key)
         }
         var lastError: Error?
         for attempt in 0...retryAttempts {
