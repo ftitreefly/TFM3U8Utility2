@@ -153,5 +153,3 @@ public final class YouTubeExtractor: M3U8LinkExtractorProtocol {
         }
     }
 }
-
-

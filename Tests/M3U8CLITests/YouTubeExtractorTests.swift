@@ -1,6 +1,6 @@
-import XCTest
 @testable import M3U8CLI
 import TFM3U8Utility
+import XCTest
 
 final class YouTubeExtractorTests: XCTestCase {
 
@@ -60,5 +60,3 @@ final class YouTubeExtractorTests: XCTestCase {
         XCTAssertTrue(info.capabilities.contains(.javascriptVariables))
     }
 }
-
-
