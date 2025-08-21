@@ -13,38 +13,27 @@ final class PerformanceOptimizedTests: XCTestCase {
     
     var testContainer: DependencyContainer!
     
-    override func setUp() {
-        super.setUp()
+    override func setUpWithError() throws {
         testContainer = DependencyContainer()
         testContainer.configure(with: DIConfiguration.performanceOptimized())
         Logger.configure(.production())
     }
     
-    override func tearDown() {
+    override func tearDownWithError() throws {
         testContainer = nil
-        super.tearDown()
     }
     
-    func testBasicInitialization() {
-        // Synchronous test to avoid async issues
-        let expectation = XCTestExpectation(description: "Basic initialization test")
-        
+    func testBasicInitialization() throws {
         // Configure performance optimization settings
         testContainer.configure(with: DIConfiguration.performanceOptimized())
         
         // Test basic configuration parsing
-        let configuration = try! testContainer.resolve(DIConfiguration.self)
-        XCTAssertNotNil(configuration)
+        let configuration = try testContainer.resolve(DIConfiguration.self)
         XCTAssertEqual(configuration.maxConcurrentDownloads, 20)
         XCTAssertEqual(configuration.downloadTimeout, 60)
-        
-        expectation.fulfill()
-        wait(for: [expectation], timeout: 1.0)
     }
     
-    func testConfigurationValidation() {
-        let expectation = XCTestExpectation(description: "Configuration validation test")
-        
+    func testConfigurationValidation() throws {
         // Test custom configuration
         let customConfig = DIConfiguration(
             ffmpegPath: "/usr/local/bin/ffmpeg",
@@ -56,86 +45,57 @@ final class PerformanceOptimizedTests: XCTestCase {
         
         testContainer.configure(with: customConfig)
         
-        let resolvedConfig = try! testContainer.resolve(DIConfiguration.self)
+        let resolvedConfig = try testContainer.resolve(DIConfiguration.self)
         XCTAssertEqual(resolvedConfig.maxConcurrentDownloads, 10)
         XCTAssertEqual(resolvedConfig.downloadTimeout, 60)
         XCTAssertEqual(resolvedConfig.defaultHeaders["User-Agent"], "TestAgent")
-        
-        expectation.fulfill()
-        wait(for: [expectation], timeout: 1.0)
     }
     
-    func testFileSystemOperations() {
-        let expectation = XCTestExpectation(description: "File system operations test")
-        let fileSystem = try! testContainer.resolve(FileSystemServiceProtocol.self)
+    func testFileSystemOperations() throws {
+        let fileSystem = try testContainer.resolve(FileSystemServiceProtocol.self)
         
-        do {
-            // Test temporary directory creation
-            let tempDir = try fileSystem.createTemporaryDirectory(nil)
-            XCTAssertTrue(fileSystem.fileExists(at: tempDir))
-            
-            // Clean up
-            try fileSystem.removeItem(at: tempDir)
-            XCTAssertFalse(fileSystem.fileExists(at: tempDir))
-            
-            expectation.fulfill()
-        } catch {
-            XCTFail("File system operations test failed: \(error)")
-            expectation.fulfill()
-        }
+        // Test temporary directory creation
+        let tempDir = try fileSystem.createTemporaryDirectory(nil)
+        XCTAssertTrue(fileSystem.fileExists(at: tempDir))
         
-        wait(for: [expectation], timeout: 2.0)
+        // Clean up
+        try fileSystem.removeItem(at: tempDir)
+        XCTAssertFalse(fileSystem.fileExists(at: tempDir))
     }
     
-    func testCommandExecutorCreation() {
-        let expectation = XCTestExpectation(description: "Command executor creation test")
+    func testCommandExecutorCreation() throws {
         // Only test service creation, don't execute actual commands
-        let commandExecutor = try! testContainer.resolve(CommandExecutorProtocol.self)
+        let commandExecutor = try testContainer.resolve(CommandExecutorProtocol.self)
         XCTAssertNotNil(commandExecutor)
-        
-        expectation.fulfill()
-        wait(for: [expectation], timeout: 1.0)
     }
     
     func testPerformanceOptimizedConfiguration() {
-        let expectation = XCTestExpectation(description: "Performance optimized configuration test")
-        
         // Test performance optimized configuration creation
         let config = DIConfiguration.performanceOptimized()
         XCTAssertNotNil(config)
         XCTAssertEqual(config.maxConcurrentDownloads, 20)
         XCTAssertEqual(config.downloadTimeout, 60)
         XCTAssertNotNil(config.defaultHeaders["User-Agent"])
-        
-        expectation.fulfill()
-        wait(for: [expectation], timeout: 1.0)
     }
     
-    func testDependencyContainerBasics() {
-        let expectation = XCTestExpectation(description: "Dependency container basics test")
-        
+    func testDependencyContainerBasics() throws {
         // Test container basic functionality
         let container = DependencyContainer()
         
         // Register a simple service
         container.register(String.self) { "test" }
-        let result = try! container.resolve(String.self)
+        let result = try container.resolve(String.self)
         XCTAssertEqual(result, "test")
         
         // Test singleton registration
         container.registerSingleton(Int.self) { 42 }
-        let value1 = try! container.resolve(Int.self)
-        let value2 = try! container.resolve(Int.self)
+        let value1 = try container.resolve(Int.self)
+        let value2 = try container.resolve(Int.self)
         XCTAssertEqual(value1, 42)
         XCTAssertEqual(value2, 42)
-        
-        expectation.fulfill()
-        wait(for: [expectation], timeout: 1.0)
     }
     
     func testM3U8ContentValidation() {
-        let expectation = XCTestExpectation(description: "M3U8 content validation test")
-        
         // Test M3U8 content format validation, don't execute actual parsing
         let validM3U8Content = """
     #EXTM3U
@@ -160,14 +120,9 @@ final class PerformanceOptimizedTests: XCTestCase {
         // Test invalid M3U8 content
         let invalidM3U8Content = "This is not a valid M3U8 file"
         XCTAssertFalse(invalidM3U8Content.contains("#EXTM3U"))
-        
-        expectation.fulfill()
-        wait(for: [expectation], timeout: 1.0)
     }
     
     func testURLValidationLogic() {
-        let expectation = XCTestExpectation(description: "URL validation logic test")
-        
         // Test URL format validation, don't execute actual network requests
         let validHTTPURL = URL(string: "https://example.com/test.m3u8")!
         XCTAssertEqual(validHTTPURL.scheme, "https")
@@ -181,14 +136,9 @@ final class PerformanceOptimizedTests: XCTestCase {
         let invalidURL = URL(string: "ftp://invalid.url")!
         XCTAssertNotEqual(invalidURL.scheme, "https")
         XCTAssertNotEqual(invalidURL.scheme, "http")
-        
-        expectation.fulfill()
-        wait(for: [expectation], timeout: 1.0)
     }
     
     func testTaskStatusEnum() {
-        let expectation = XCTestExpectation(description: "Task status enum test")
-        
         // Test various states of TaskStatus enum
         let pendingStatus = TaskStatus.pending
         let downloadingStatus = TaskStatus.downloading(progress: 0.5)
@@ -202,16 +152,11 @@ final class PerformanceOptimizedTests: XCTestCase {
         XCTAssertNotNil(processingStatus)
         XCTAssertNotNil(completedStatus)
         XCTAssertNotNil(cancelledStatus)
-        
-        expectation.fulfill()
-        wait(for: [expectation], timeout: 1.0)
     }
     
-    func testM3U8ParserServiceDirect() {
-        let expectation = XCTestExpectation(description: "M3U8 parser service direct test")
-        
+    func testM3U8ParserServiceDirect() throws {
         // Directly test parser service, avoid async operations
-        let parser = try! testContainer.resolve(M3U8ParserServiceProtocol.self)
+        let parser = try testContainer.resolve(M3U8ParserServiceProtocol.self)
         
         // Create simple M3U8 content
         let m3u8Content = """
@@ -240,19 +185,12 @@ final class PerformanceOptimizedTests: XCTestCase {
                 XCTFail("Expected media playlist")
             }
             
-            expectation.fulfill()
-            
         } catch {
             XCTFail("M3U8 parser service direct test failed: \(error)")
-            expectation.fulfill()
         }
-        
-        wait(for: [expectation], timeout: 2.0)
     }
     
     func testDownloadConfigurationTypes() {
-        let expectation = XCTestExpectation(description: "Download configuration types test")
-        
         // Test DownloadConfiguration and related types
         let defaultConfig = DownloadConfiguration.default
         XCTAssertEqual(defaultConfig.maxConcurrentDownloads, 3)
@@ -278,14 +216,9 @@ final class PerformanceOptimizedTests: XCTestCase {
         XCTAssertEqual(customConfig.qualityPreference, .highest)
         XCTAssertFalse(customConfig.cleanupTempFiles)
         XCTAssertEqual(customConfig.httpHeaders["Custom-Header"], "CustomValue")
-        
-        expectation.fulfill()
-        wait(for: [expectation], timeout: 1.0)
     }
     
     func testDownloadProgressCalculation() {
-        let expectation = XCTestExpectation(description: "Download progress calculation test")
-        
         // Test DownloadProgress calculation logic
         let progress1 = DownloadProgress(
             totalSegments: 100,
@@ -323,14 +256,9 @@ final class PerformanceOptimizedTests: XCTestCase {
         
         XCTAssertEqual(progress3.progress, 0.0)
         XCTAssertEqual(progress3.state, .pending)
-        
-        expectation.fulfill()
-        wait(for: [expectation], timeout: 1.0)
     }
     
     func testDownloadAPISignature() {
-        let expectation = XCTestExpectation(description: "Download API signature test")
-        
         // Test download API signature and parameter validation
         let testURL = URL(string: "https://example.com/test.m3u8")!
         
@@ -342,9 +270,6 @@ final class PerformanceOptimizedTests: XCTestCase {
         XCTAssertEqual(testURL.scheme, "https")
         XCTAssertEqual(testURL.host, "example.com")
         XCTAssertEqual(testURL.pathExtension, "m3u8")
-        
-        expectation.fulfill()
-        wait(for: [expectation], timeout: 1.0)
     }
 }
 
