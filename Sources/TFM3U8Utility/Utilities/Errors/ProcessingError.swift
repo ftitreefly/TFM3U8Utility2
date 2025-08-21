@@ -10,6 +10,20 @@ import Foundation
 // MARK: - Processing Error
 
 /// Download and processing related errors
+/// 
+/// ## Error Codes
+/// - 4001: Required external tool not found
+/// - 4002: Conversion/processing failed
+/// - 4003: Corrupted source file
+/// - 4004: Operation cancelled
+/// - 4005: Master playlists not supported
+/// - 4007: Empty content
+/// - 4008: No valid segments
+/// - 4009: FFmpeg not found
+/// - 4010: Task not found
+/// - 4011: No M3U8 links found
+/// - 4012: Invalid URL
+/// - 4013: Maximum retry attempts exceeded
 public struct ProcessingError: TFM3U8Error {
     public let domain = "TFM3U8Utility.Processing"
     public let code: Int
@@ -23,6 +37,14 @@ public struct ProcessingError: TFM3U8Error {
         case 4002: return "Verify FFmpeg is installed and supports the required codecs."
         case 4003: return "Ensure the source files are not corrupted."
         case 4004: return "Check if the process was interrupted and retry."
+        case 4005: return "Master playlists are not supported yet."
+        case 4007: return "The downloaded content is empty."
+        case 4008: return "No valid segments were found."
+        case 4009: return "FFmpeg command was not found."
+        case 4010: return "The task was not found."
+        case 4011: return "No M3U8 links were found in the content."
+        case 4012: return "The URL is invalid."
+        case 4013: return "The maximum retry attempts were exceeded."
         default: return "Verify external tools are installed and retry the operation."
         }
     }
@@ -42,7 +64,7 @@ public struct ProcessingError: TFM3U8Error {
         return underlyingError?.localizedDescription
     }
     
-    // Common processing errors
+    // MARK: - Common factory methods
     public static func toolNotFound(_ tool: String) -> ProcessingError {
         ProcessingError(
             code: 4001,

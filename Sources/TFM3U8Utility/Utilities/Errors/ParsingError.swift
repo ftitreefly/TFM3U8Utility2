@@ -10,6 +10,11 @@ import Foundation
 // MARK: - Parsing Error
 
 /// Parsing related errors
+/// 
+/// ## Error Codes
+/// - 2001: Malformed playlist / missing required data
+/// - 2003: Invalid tag format
+/// - 2004: Invalid content encoding
 public struct ParsingError: TFM3U8Error {
     public let domain = "TFM3U8Utility.Parsing"
     public let code: Int
@@ -22,6 +27,7 @@ public struct ParsingError: TFM3U8Error {
         case 2001: return "Ensure the M3U8 file is properly formatted and contains required tags."
         case 2002: return "Check if the file is corrupted or incomplete."
         case 2003: return "Verify the tag format matches M3U8 specifications."
+        case 2004: return "Check the content encoding and try again."
         default: return "Validate the M3U8 file format and content."
         }
     }
@@ -41,31 +47,31 @@ public struct ParsingError: TFM3U8Error {
         return context ?? underlyingError?.localizedDescription
     }
     
-    // Common parsing errors
+    // MARK: - Common factory methods
     public static func malformedPlaylist(_ reason: String) -> ParsingError {
         ParsingError(
             code: 2001,
             underlyingError: nil,
-            message: "Malformed M3U8 playlist",
+            message: "Malformed M3U8 playlist: \(reason)",
             context: reason
         )
     }
     
+    public static func missingRequiredTag(_ tag: String) -> ParsingError {
+        ParsingError(
+            code: 2002,
+            underlyingError: nil,
+            message: "Missing required tag: \(tag)",
+            context: nil
+        )
+    }
+
     public static func invalidTag(_ tag: String, expected: String, received: String) -> ParsingError {
         ParsingError(
             code: 2003,
             underlyingError: nil,
             message: "Invalid tag format: \(tag)",
             context: "Expected: \(expected), Received: \(received)"
-        )
-    }
-    
-    public static func missingRequiredTag(_ tag: String) -> ParsingError {
-        ParsingError(
-            code: 2001,
-            underlyingError: nil,
-            message: "Missing required tag: \(tag)",
-            context: nil
         )
     }
     

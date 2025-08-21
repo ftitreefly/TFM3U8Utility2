@@ -10,6 +10,18 @@ import Foundation
 // MARK: - File System Error
 
 /// File system and I/O related errors
+/// 
+/// ## Error Codes
+/// - 3001: File not found / read permission
+/// - 3002: Write permission denied
+/// - 3003: Insufficient disk space
+/// - 3004: Failed to create directory
+/// - 3005: Failed to create file
+/// - 3006: Failed to write file
+/// - 3007: Failed to read file
+/// - 3008: Failed to delete file
+/// - 3009: Failed to move file
+/// - 3010: Failed to copy file
 public struct FileSystemError: TFM3U8Error {
     public let domain = "TFM3U8Utility.FileSystem"
     public let code: Int
@@ -23,6 +35,12 @@ public struct FileSystemError: TFM3U8Error {
         case 3002: return "Ensure you have write permissions to the destination directory."
         case 3003: return "Verify there's enough disk space available."
         case 3004: return "Check if the directory exists and is accessible."
+        case 3005: return "Check if the file exists and is accessible."
+        case 3006: return "Check if the file exists and is writable."
+        case 3007: return "Check if the file exists and is readable."
+        case 3008: return "Check if the file exists and is deletable."
+        case 3009: return "Check if the file exists and is movable."
+        case 3010: return "Check if the file exists and is copyable."
         default: return "Verify file permissions and disk space."
         }
     }
@@ -42,7 +60,7 @@ public struct FileSystemError: TFM3U8Error {
         return underlyingError?.localizedDescription
     }
     
-    // Common file system errors
+    // MARK: - Common factory methods
     public static func fileNotFound(_ path: String) -> FileSystemError {
         FileSystemError(
             code: 3001,

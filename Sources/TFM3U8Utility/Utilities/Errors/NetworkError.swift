@@ -10,6 +10,12 @@ import Foundation
 // MARK: - Network Error
 
 /// Network and download related errors
+/// 
+/// ## Error Codes
+/// - 1001: Connection failed
+/// - 1002: Invalid URL
+/// - 1003: Server returned non-200 status
+/// - 1004: Invalid/unsupported response
 public struct NetworkError: TFM3U8Error {
     public let domain = "TFM3U8Utility.Network"
     public let code: Int
@@ -41,7 +47,8 @@ public struct NetworkError: TFM3U8Error {
         return underlyingError?.localizedDescription
     }
     
-    // Common network errors
+    // MARK: - Common factory methods
+    /// Connection failed for URL
     public static func connectionFailed(_ url: URL, underlying: Error) -> NetworkError {
         NetworkError(
             code: 1001,
@@ -51,6 +58,7 @@ public struct NetworkError: TFM3U8Error {
         )
     }
     
+    /// Invalid URL string
     public static func invalidURL(_ urlString: String) -> NetworkError {
         NetworkError(
             code: 1002,
@@ -60,6 +68,7 @@ public struct NetworkError: TFM3U8Error {
         )
     }
     
+    /// HTTP server error for URL with status code
     public static func serverError(_ url: URL, statusCode: Int) -> NetworkError {
         NetworkError(
             code: 1003,
@@ -69,6 +78,7 @@ public struct NetworkError: TFM3U8Error {
         )
     }
     
+    /// Invalid or unsupported response
     public static func invalidResponse(_ url: String) -> NetworkError {
         NetworkError(
             code: 1004,

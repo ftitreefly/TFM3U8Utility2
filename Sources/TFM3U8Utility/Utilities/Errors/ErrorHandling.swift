@@ -292,7 +292,7 @@ public enum ErrorHandling {
     ///     additionalInfo: ["attempt": 3, "timeout": 30]
     /// )
     /// ```
-    public static func createContextualError<T: TFM3U8Error>(_ error: T, 
+    public static func createContextualError<T: TFM3U8Error>(_ error: T,
                                                              operation: String,
                                                              additionalInfo: [String: Any] = [:]) -> T {
         var newUserInfo = error.userInfo
