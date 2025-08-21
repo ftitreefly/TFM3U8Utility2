@@ -39,7 +39,7 @@ Add TFM3U8Utility2 to your project dependencies:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/ftitreefly/TFM3U8Utility2.git", from: "1.3.1")
+    .package(url: "https://github.com/ftitreefly/TFM3U8Utility2.git", from: "1.3.3")
 ]
 ```
 
@@ -64,7 +64,7 @@ await TFM3U8Utility.initialize()
 try await TFM3U8Utility.download(
     .web,
     url: URL(string: "https://example.com/video.m3u8")!,
-    savedDirectory: "/Users/username/Downloads/videos/",
+    savedDirectory: URL(fileURLWithPath: "/Users/username/Downloads/videos/"),
     name: "my-video",
     verbose: true
 )
@@ -99,6 +99,8 @@ m3u8-utility extract "https://example.com/video-page"
 # Show tool information
 m3u8-utility info
 ```
+
+Note: CLI URLs must use http or https schemes.
 
 ## 📊 Logging System
 
@@ -171,10 +173,10 @@ let links = try await registry.extractM3U8Links(
 
 ```bash
 # Extract M3U8 links from web pages
-m3u8-utility extract "https://example.com/video-page" --verbose
+m3u8-utility extract "https://example.com/video-page" --methods direct-links
 
-# Save results to file
-m3u8-utility extract "https://example.com/video-page" --output links.txt
+# Show registered extractors
+m3u8-utility extract "https://example.com/video-page" --show-extractors
 ```
 
 ## 🧪 Testing
@@ -217,7 +219,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 This project includes code adapted from [go-swifty-m3u8](https://github.com/gal-orlanczyk/go-swifty-m3u8), which is licensed under the MIT License:
 
-```
+```text
 Copyright (c) Gal Orlanczyk
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -242,34 +244,3 @@ THE SOFTWARE.
 - **Documentation**: [API Documentation](https://ftitreefly.github.io/TFM3U8Utility2)
 - **Discussions**: [GitHub Discussions](https://github.com/ftitreefly/TFM3U8Utility2/discussions)
 
-## 📋 Changelog
-
-### Version 1.3.1 - 2025-01-27
-- 🔧 Enhanced YouTube M3U8 link extractor with improved error handling
-- 🏗️ Simplified ExtractCommand structure for better maintainability
-- ⚡ Optimized YouTubeExtractor demo implementation
-- 🎯 Enhanced command structures with dynamic versioning support
-
-### Version 1.3.0 - 2025-01-27
-- 🎬 YouTube M3U8 link extractor for extracting streaming links
-- 🔗 Third-party integration support for M3U8 link extraction
-- 🌐 Enhanced CLI extract command with comprehensive options
-- 📊 Support for multiple extraction methods
-- 🔧 Custom User-Agent and HTTP header support
-
-### Version 1.2.0 - 2025-07-28
-- ⚡ Performance optimization with streamlined task management
-- 🧹 Code cleanup and architecture improvements
-- 📊 Enhanced logging integration
-
-### Version 1.1.0 - 2025-07-25
-- 🎉 Advanced logging system with multiple levels and categories
-- 🚀 Comprehensive logging configuration
-- 📊 Log categories for better organization
-
-### Version 1.0.0 - 2025-07-21
-- 🎉 Initial release with Swift 6+ support
-- 🚀 High-performance M3U8 processing
-- 🖥️ CLI tool with download and info commands
-- 🛡️ Comprehensive error handling
-- 🔧 Full dependency injection architecture
