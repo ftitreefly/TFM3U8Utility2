@@ -116,6 +116,15 @@ public final class DependencyContainer: Sendable {
         return storage.resolve(type)
     }
     
+    /// Resolves a service and throws typed configuration errors instead of terminating the process
+    ///
+    /// - Parameter type: The protocol type to resolve
+    /// - Returns: The resolved instance
+    /// - Throws: `ConfigurationError` when service is not registered or cast fails
+    public func tryResolve<T>(_ type: T.Type) throws -> T {
+        return try storage.tryResolve(type)
+    }
+    
     /// Configures the container with the specified configuration
     /// 
     /// This method registers all the default services used by the M3U8 utility
@@ -177,6 +186,11 @@ public final class DependencyContainer: Sendable {
                 maxConcurrentTasks: self.resolve(DIConfiguration.self).maxConcurrentDownloads / 4
             )
         }
+    }
+
+    /// Clears all registrations and singletons. Use with caution.
+    public func reset() {
+        storage.reset()
     }
 }
 
@@ -249,6 +263,31 @@ private final class Storage: @unchecked Sendable {
         }
         
         return instance
+    }
+    
+    /// Throwing variant that returns typed configuration errors instead of terminating the process
+    func tryResolve<T>(_ type: T.Type) throws -> T {
+        let key = ObjectIdentifier(type)
+        lock.lock()
+        defer { lock.unlock() }
+        
+        guard let factory = factories[key] else {
+            throw ConfigurationError.missingParameter("Service: \(type)")
+        }
+        
+        guard let instance = factory() as? T else {
+            throw ConfigurationError.invalidParameterValue("Service: \(type)", value: "Type cast failed")
+        }
+        
+        return instance
+    }
+    
+    /// Remove all registrations and singletons
+    func reset() {
+        lock.lock()
+        factories.removeAll(keepingCapacity: false)
+        singletons.removeAll(keepingCapacity: false)
+        lock.unlock()
     }
 }
 
