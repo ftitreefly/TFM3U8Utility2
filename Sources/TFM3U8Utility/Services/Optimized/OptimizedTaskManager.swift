@@ -635,7 +635,7 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
         cfg.waitsForConnectivity = true
         cfg.httpMaximumConnectionsPerHost = max(6, configuration.maxConcurrentDownloads)
         cfg.timeoutIntervalForRequest = configuration.downloadTimeout
-        cfg.timeoutIntervalForResource = max(configuration.downloadTimeout * 2, configuration.downloadTimeout + 30)
+        cfg.timeoutIntervalForResource = configuration.resourceTimeout
         cfg.httpAdditionalHeaders = configuration.defaultHeaders
         cfg.requestCachePolicy = .reloadIgnoringLocalCacheData
         return URLSession(configuration: cfg)

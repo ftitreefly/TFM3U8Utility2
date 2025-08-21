@@ -42,6 +42,9 @@ public struct DIConfiguration: Sendable {
     /// Timeout in seconds for download operations
     public let downloadTimeout: TimeInterval
     
+    /// Resource timeout in seconds for overall transfer operations
+    public let resourceTimeout: TimeInterval
+    
     /// Initializes a new configuration instance
     /// 
     /// - Parameters:
@@ -55,13 +58,15 @@ public struct DIConfiguration: Sendable {
         curlPath: String? = nil,
         defaultHeaders: [String: String] = ["User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"],
         maxConcurrentDownloads: Int = 16,
-        downloadTimeout: TimeInterval = 300
+        downloadTimeout: TimeInterval = 300,
+        resourceTimeout: TimeInterval? = nil
     ) {
         self.ffmpegPath = ffmpegPath
         self.curlPath = curlPath
         self.defaultHeaders = defaultHeaders
         self.maxConcurrentDownloads = maxConcurrentDownloads
         self.downloadTimeout = downloadTimeout
+        self.resourceTimeout = resourceTimeout ?? downloadTimeout
     }
 }
 
@@ -103,7 +108,8 @@ extension DIConfiguration {
                 "Connection": "keep-alive"
             ],
             maxConcurrentDownloads: 20,
-            downloadTimeout: 60
+            downloadTimeout: 60,
+            resourceTimeout: 120
         )
     }
 }

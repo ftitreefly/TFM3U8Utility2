@@ -77,8 +77,9 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
         mockDownloader.enableDelay = !enableFastTesting
         
         let testConfiguration = DIConfiguration(
-            maxConcurrentDownloads: 4,
-            downloadTimeout: 30
+            maxConcurrentDownloads: 2,
+            downloadTimeout: 1,
+            resourceTimeout: 1
         )
         
         taskManager = OptimizedTaskManager(

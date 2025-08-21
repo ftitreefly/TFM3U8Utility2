@@ -642,3 +642,13 @@ public protocol JavaScriptExecutorProtocol: Sendable {
     /// - Returns: A new JavaScript execution context
     func createContext(url: URL, cookies: [String: String]?, headers: [String: String]?) -> JavaScriptContext
 }
+
+/// Protocol for providing well-known filesystem paths
+///
+/// Provides platform-aware standard directories used by the application.
+public protocol PathProviderProtocol: Sendable {
+    /// Returns the user's Downloads directory path
+    func downloadsDirectory() -> String
+    /// Returns a temporary directory URL for ephemeral files
+    func temporaryDirectory() -> URL
+}

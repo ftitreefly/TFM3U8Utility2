@@ -9,7 +9,7 @@ import Foundation
 
 // MARK: - Default File System Service
 
-public struct DefaultFileSystemService: FileSystemServiceProtocol {
+public struct DefaultFileSystemService: FileSystemServiceProtocol, PathProviderProtocol {
     // Use FileManager.default directly instead of storing it
     public init() {}
     
@@ -54,5 +54,15 @@ public struct DefaultFileSystemService: FileSystemServiceProtocol {
     
     public func copyItem(at sourceURL: URL, to destinationURL: URL) throws {
         try FileManager.default.copyItem(at: sourceURL, to: destinationURL)
+    }
+    
+    // MARK: - PathProviderProtocol
+    public func downloadsDirectory() -> String {
+        let urls = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask)
+        return (urls.first ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Downloads")).path
+    }
+    
+    public func temporaryDirectory() -> URL {
+        return FileManager.default.temporaryDirectory
     }
 }

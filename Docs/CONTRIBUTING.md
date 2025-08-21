@@ -103,7 +103,7 @@ public struct TFM3U8_Utility {
 public static func download(
     _ method: Method = .web,
     url: URL,
-    savedDirectory: String = "\(NSHomeDirectory())/Downloads/",
+    savedDirectory: String = "", // use PathProviderProtocol to determine default Downloads
     name: String? = nil
 ) async throws
 ```

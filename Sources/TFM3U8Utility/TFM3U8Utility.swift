@@ -91,7 +91,7 @@ public struct TFM3U8Utility {
     public static func download(
         _ method: Method = .web,
         url: URL,
-        savedDirectory: String = "\(NSHomeDirectory())/Downloads/",
+        savedDirectory: String = "",
         name: String? = nil,
         configuration: DIConfiguration = DIConfiguration.performanceOptimized(),
         verbose: Bool = false
@@ -104,12 +104,21 @@ public struct TFM3U8Utility {
         // Use dependency injection for file system operations
         let fileSystem = try await GlobalDependencies.shared.resolve(FileSystemServiceProtocol.self)
         
+        // Resolve default directory if not provided
+        let finalSavedDirectory: String
+        if savedDirectory.isEmpty {
+            let paths = try await GlobalDependencies.shared.resolve(PathProviderProtocol.self)
+            finalSavedDirectory = paths.downloadsDirectory()
+        } else {
+            finalSavedDirectory = savedDirectory
+        }
+        
         // Create output directory if needed
-        if !fileSystem.fileExists(at: savedDirectory) {
+        if !fileSystem.fileExists(at: finalSavedDirectory) {
             do {
-                try fileSystem.createDirectory(at: savedDirectory, withIntermediateDirectories: true)
+                try fileSystem.createDirectory(at: finalSavedDirectory, withIntermediateDirectories: true)
             } catch {
-                throw FileSystemError.failedToCreateDirectory(savedDirectory)
+                throw FileSystemError.failedToCreateDirectory(finalSavedDirectory)
             }
         }
         
@@ -120,7 +129,7 @@ public struct TFM3U8Utility {
         let request = TaskRequest(
             url: url,
             baseUrl: baseUrl,
-            savedDirectory: savedDirectory,
+            savedDirectory: finalSavedDirectory,
             fileName: name,
             method: method,
             verbose: verbose

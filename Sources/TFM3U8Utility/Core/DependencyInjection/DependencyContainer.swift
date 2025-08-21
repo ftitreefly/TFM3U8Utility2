@@ -139,6 +139,7 @@ public final class DependencyContainer: Sendable {
     public func configure(with configuration: DIConfiguration) {
         registerSingleton(DIConfiguration.self) { configuration }
         registerSingleton(FileSystemServiceProtocol.self) { DefaultFileSystemService() }
+        registerSingleton(PathProviderProtocol.self) { DefaultFileSystemService() }
         registerSingleton(CommandExecutorProtocol.self) { DefaultCommandExecutor() }
         
         register(M3U8DownloaderProtocol.self) { [weak self] in

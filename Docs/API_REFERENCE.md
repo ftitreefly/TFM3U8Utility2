@@ -38,7 +38,7 @@ await TFM3U8Utility.initialize(with: config)
 public static func download(
     _ method: Method = .web,
     url: URL,
-    savedDirectory: String = "\(NSHomeDirectory())/Downloads/",
+    savedDirectory: String = "", // resolve via PathProviderProtocol by default
     name: String? = nil,
     configuration: DIConfiguration = DIConfiguration.performanceOptimized(),
     verbose: Bool = false
