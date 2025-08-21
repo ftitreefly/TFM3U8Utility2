@@ -34,7 +34,7 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
         testContainer.configure(with: DIConfiguration.performanceOptimized())
         
         // Setup real file system for temporary directory
-        fileSystem = testContainer.resolve(FileSystemServiceProtocol.self)
+        fileSystem = try! testContainer.resolve(FileSystemServiceProtocol.self)
         
         do {
             tempDirectory = try fileSystem.createTemporaryDirectory("TaskManagerTests")

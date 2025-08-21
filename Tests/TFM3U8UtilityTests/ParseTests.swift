@@ -32,7 +32,7 @@ final class ParseTests: XCTestCase {
         testContainer.configure(with: DIConfiguration.performanceOptimized())
         
         // Create temporary directory
-        fileSystem = testContainer.resolve(FileSystemServiceProtocol.self)
+        fileSystem = try! testContainer.resolve(FileSystemServiceProtocol.self)
         
         do {
             tempDirectory = try fileSystem.createTemporaryDirectory(nil)
@@ -41,7 +41,7 @@ final class ParseTests: XCTestCase {
             return
         }
         
-        httpSystem = testContainer.resolve(M3U8DownloaderProtocol.self)
+        httpSystem = try! testContainer.resolve(M3U8DownloaderProtocol.self)
         parser = M3U8Parser()
         
         // Test temporary directory created

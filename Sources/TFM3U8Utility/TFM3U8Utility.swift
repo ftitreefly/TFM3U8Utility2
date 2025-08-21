@@ -102,7 +102,7 @@ public struct TFM3U8Utility {
         
         Logger.debug("Concurrent file downloads count: \(configuration.maxConcurrentDownloads), single file download timeout: \(configuration.downloadTimeout) seconds", category: .download)
         // Use dependency injection for file system operations
-        let fileSystem = await Dependencies.resolve(FileSystemServiceProtocol.self)
+        let fileSystem = try await Dependencies.resolve(FileSystemServiceProtocol.self)
         
         // Create output directory if needed
         if !fileSystem.fileExists(at: savedDirectory) {
@@ -114,7 +114,7 @@ public struct TFM3U8Utility {
         }
         
         // Use the injected task manager
-        let taskManager = await Dependencies.resolve(TaskManagerProtocol.self)
+        let taskManager = try await Dependencies.resolve(TaskManagerProtocol.self)
         let baseUrl = method.baseURL ?? url.deletingLastPathComponent()
         
         let request = TaskRequest(
@@ -175,8 +175,8 @@ public struct TFM3U8Utility {
         configuration: DIConfiguration = DIConfiguration.performanceOptimized()
     ) async throws -> M3U8Parser.ParserResult {
         await Dependencies.configure(with: configuration)
-        let downloader = await Dependencies.resolve(M3U8DownloaderProtocol.self)
-        let parser = await Dependencies.resolve(M3U8ParserServiceProtocol.self)
+        let downloader = try await Dependencies.resolve(M3U8DownloaderProtocol.self)
+        let parser = try await Dependencies.resolve(M3U8ParserServiceProtocol.self)
         
         do {
             let baseURL: URL

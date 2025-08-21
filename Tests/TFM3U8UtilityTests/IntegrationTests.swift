@@ -140,7 +140,7 @@ final class IntegrationTests: XCTestCase {
         }
         
         // Resolve configuration
-        let config = container.resolve(DIConfiguration.self)
+        let config = try! container.resolve(DIConfiguration.self)
         XCTAssertEqual(config.maxConcurrentDownloads, 8)
         XCTAssertEqual(config.downloadTimeout, 120)
         

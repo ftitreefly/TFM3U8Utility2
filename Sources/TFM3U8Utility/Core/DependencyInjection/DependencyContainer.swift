@@ -105,15 +105,15 @@ public final class DependencyContainer: Sendable {
     /// 
     /// - Returns: An instance of the requested service
     /// 
-    /// - Throws: Fatal error if the service is not registered
+    /// - Throws: `ConfigurationError` if the service is not registered or cast fails
     /// 
     /// ## Usage Example
     /// ```swift
-    /// let downloader = container.resolve(M3U8DownloaderProtocol.self)
+    /// let downloader = try container.resolve(M3U8DownloaderProtocol.self)
     /// let content = try await downloader.downloadContent(from: url)
     /// ```
-    public func resolve<T>(_ type: T.Type) -> T {
-        return storage.resolve(type)
+    public func resolve<T>(_ type: T.Type) throws -> T {
+        return try storage.tryResolve(type)
     }
     
     /// Resolves a service and throws typed configuration errors instead of terminating the process
@@ -151,8 +151,8 @@ public final class DependencyContainer: Sendable {
             guard let self = self else {
                 fatalError("Container deallocated during service creation")
             }
-            let commandExecutor = self.resolve(CommandExecutorProtocol.self)
-            let configuration = self.resolve(DIConfiguration.self)
+            let commandExecutor = try! self.resolve(CommandExecutorProtocol.self)
+            let configuration = try! self.resolve(DIConfiguration.self)
             return OptimizedM3U8Downloader(
                 commandExecutor: commandExecutor,
                 configuration: configuration
@@ -165,8 +165,8 @@ public final class DependencyContainer: Sendable {
             guard let self = self else {
                 fatalError("Container deallocated during service creation")
             }
-            let commandExecutor = self.resolve(CommandExecutorProtocol.self)
-            let configuration = self.resolve(DIConfiguration.self)
+            let commandExecutor = try! self.resolve(CommandExecutorProtocol.self)
+            let configuration = try! self.resolve(DIConfiguration.self)
             return OptimizedVideoProcessor(
                 commandExecutor: commandExecutor,
                 configuration: configuration
@@ -178,12 +178,12 @@ public final class DependencyContainer: Sendable {
                 fatalError("Container deallocated during service creation")
             }
             return OptimizedTaskManager(
-                downloader: self.resolve(M3U8DownloaderProtocol.self),
-                parser: self.resolve(M3U8ParserServiceProtocol.self),
-                processor: self.resolve(VideoProcessorProtocol.self),
-                fileSystem: self.resolve(FileSystemServiceProtocol.self),
-                configuration: self.resolve(DIConfiguration.self),
-                maxConcurrentTasks: self.resolve(DIConfiguration.self).maxConcurrentDownloads / 4
+                downloader: try! self.resolve(M3U8DownloaderProtocol.self),
+                parser: try! self.resolve(M3U8ParserServiceProtocol.self),
+                processor: try! self.resolve(VideoProcessorProtocol.self),
+                fileSystem: try! self.resolve(FileSystemServiceProtocol.self),
+                configuration: try! self.resolve(DIConfiguration.self),
+                maxConcurrentTasks: (try! self.resolve(DIConfiguration.self)).maxConcurrentDownloads / 4
             )
         }
     }
@@ -307,8 +307,8 @@ public extension DependencyContainer {
     /// ```swift
     /// let downloader = container.get(M3U8DownloaderProtocol.self)
     /// ```
-    func get<T>(_ type: T.Type) -> T {
-        return resolve(type)
+    func get<T>(_ type: T.Type) throws -> T {
+        return try resolve(type)
     }
 }
 

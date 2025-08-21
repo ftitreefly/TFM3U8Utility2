@@ -32,7 +32,7 @@ final class PerformanceOptimizedTests: XCTestCase {
         testContainer.configure(with: DIConfiguration.performanceOptimized())
         
         // Test basic configuration parsing
-        let configuration = testContainer.resolve(DIConfiguration.self)
+        let configuration = try! testContainer.resolve(DIConfiguration.self)
         XCTAssertNotNil(configuration)
         XCTAssertEqual(configuration.maxConcurrentDownloads, 20)
         XCTAssertEqual(configuration.downloadTimeout, 60)
@@ -55,7 +55,7 @@ final class PerformanceOptimizedTests: XCTestCase {
         
         testContainer.configure(with: customConfig)
         
-        let resolvedConfig = testContainer.resolve(DIConfiguration.self)
+        let resolvedConfig = try! testContainer.resolve(DIConfiguration.self)
         XCTAssertEqual(resolvedConfig.maxConcurrentDownloads, 10)
         XCTAssertEqual(resolvedConfig.downloadTimeout, 60)
         XCTAssertEqual(resolvedConfig.defaultHeaders["User-Agent"], "TestAgent")
@@ -66,7 +66,7 @@ final class PerformanceOptimizedTests: XCTestCase {
     
     func testFileSystemOperations() {
         let expectation = XCTestExpectation(description: "File system operations test")
-        let fileSystem = testContainer.resolve(FileSystemServiceProtocol.self)
+        let fileSystem = try! testContainer.resolve(FileSystemServiceProtocol.self)
         
         do {
             // Test temporary directory creation
@@ -89,7 +89,7 @@ final class PerformanceOptimizedTests: XCTestCase {
     func testCommandExecutorCreation() {
         let expectation = XCTestExpectation(description: "Command executor creation test")
         // Only test service creation, don't execute actual commands
-        let commandExecutor = testContainer.resolve(CommandExecutorProtocol.self)
+        let commandExecutor = try! testContainer.resolve(CommandExecutorProtocol.self)
         XCTAssertNotNil(commandExecutor)
         
         expectation.fulfill()
@@ -118,13 +118,13 @@ final class PerformanceOptimizedTests: XCTestCase {
         
         // Register a simple service
         container.register(String.self) { "test" }
-        let result = container.resolve(String.self)
+        let result = try! container.resolve(String.self)
         XCTAssertEqual(result, "test")
         
         // Test singleton registration
         container.registerSingleton(Int.self) { 42 }
-        let value1 = container.resolve(Int.self)
-        let value2 = container.resolve(Int.self)
+        let value1 = try! container.resolve(Int.self)
+        let value2 = try! container.resolve(Int.self)
         XCTAssertEqual(value1, 42)
         XCTAssertEqual(value2, 42)
         
@@ -210,7 +210,7 @@ final class PerformanceOptimizedTests: XCTestCase {
         let expectation = XCTestExpectation(description: "M3U8 parser service direct test")
         
         // Directly test parser service, avoid async operations
-        let parser = testContainer.resolve(M3U8ParserServiceProtocol.self)
+        let parser = try! testContainer.resolve(M3U8ParserServiceProtocol.self)
         
         // Create simple M3U8 content
         let m3u8Content = """

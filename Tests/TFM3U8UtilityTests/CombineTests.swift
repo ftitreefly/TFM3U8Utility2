@@ -23,11 +23,11 @@ final class CombineTests: XCTestCase, @unchecked Sendable {
         testContainer = DependencyContainer()
         testContainer.configure(with: DIConfiguration.performanceOptimized())
         
-        videoSystem = testContainer.resolve(VideoProcessorProtocol.self)
-        httpSystem = testContainer.resolve(M3U8DownloaderProtocol.self)
+        videoSystem = try! testContainer.resolve(VideoProcessorProtocol.self)
+        httpSystem = try! testContainer.resolve(M3U8DownloaderProtocol.self)
         
         // Create temporary directory
-        fileSystem = testContainer.resolve(FileSystemServiceProtocol.self)
+        fileSystem = try! testContainer.resolve(FileSystemServiceProtocol.self)
         
         do {
             tempDirectory = try fileSystem.createTemporaryDirectory(nil)

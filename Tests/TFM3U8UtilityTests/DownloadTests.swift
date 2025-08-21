@@ -31,7 +31,7 @@ final class DownloadTests: XCTestCase {
         testContainer.configure(with: DIConfiguration.performanceOptimized())
         
         // Create temporary directory
-        fileSystem = testContainer.resolve(FileSystemServiceProtocol.self)
+        fileSystem = try! testContainer.resolve(FileSystemServiceProtocol.self)
         
         do {
             tempDirectory = try fileSystem.createTemporaryDirectory(nil)
@@ -40,7 +40,7 @@ final class DownloadTests: XCTestCase {
             return
         }
         
-        httpSystem = testContainer.resolve(M3U8DownloaderProtocol.self)
+        httpSystem = try! testContainer.resolve(M3U8DownloaderProtocol.self)
         
         // Test temporary directory created
     }
@@ -61,7 +61,7 @@ final class DownloadTests: XCTestCase {
     func testPerformanceOptimizedConfiguration() throws {
         XCTAssertNotNil(testContainer, "Test container should exist")
 
-        let config = testContainer.resolve(DIConfiguration.self)
+        let config = try! testContainer.resolve(DIConfiguration.self)
         XCTAssertGreaterThan(config.maxConcurrentDownloads, 8, "Performance optimization config should have higher concurrent downloads")
         XCTAssertGreaterThan(config.downloadTimeout, 0, "Download timeout should be greater than 0")
     }
@@ -264,7 +264,7 @@ final class DownloadTests: XCTestCase {
     
     func testDownloadQuickResponse() async throws {
         // Test quick response
-        let downloader = testContainer.resolve(M3U8DownloaderProtocol.self)
+        let downloader = try! testContainer.resolve(M3U8DownloaderProtocol.self)
         let testURL = URL(string: testM3U8URLs[0])!
         
         let startTime = Date()
