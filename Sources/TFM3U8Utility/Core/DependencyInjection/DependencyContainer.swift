@@ -190,11 +190,11 @@ private final class Storage: @unchecked Sendable {
     /// Lock for thread-safe access to storage
     private let lock = NSRecursiveLock()
     
-    /// Registered service factories
-    private var factories: [String: () -> Any] = [:]
+    /// Registered service factories (keyed by ObjectIdentifier)
+    private var factories: [ObjectIdentifier: () -> Any] = [:]
     
     /// Cached singleton instances
-    private var singletons: [String: Any] = [:]
+    private var singletons: [ObjectIdentifier: Any] = [:]
     
     /// Registers a transient service factory
     /// 
@@ -202,7 +202,7 @@ private final class Storage: @unchecked Sendable {
     ///   - type: The service type to register
     ///   - factory: Factory closure that creates the service
     func register<T>(_ type: T.Type, factory: @escaping @Sendable () -> T) {
-        let key = String(describing: type)
+        let key = ObjectIdentifier(type)
         lock.lock()
         defer { lock.unlock() }
         factories[key] = factory
@@ -214,10 +214,11 @@ private final class Storage: @unchecked Sendable {
     ///   - type: The service type to register
     ///   - factory: Factory closure that creates the service
     func registerSingleton<T>(_ type: T.Type, factory: @escaping @Sendable () -> T) {
-        let key = String(describing: type)
+        let key = ObjectIdentifier(type)
         lock.lock()
         defer { lock.unlock() }
-        factories[key] = {
+        factories[key] = { [weak self] in
+            guard let self else { return factory() }
             if let existing = self.singletons[key] as? T {
                 return existing
             }
@@ -235,7 +236,7 @@ private final class Storage: @unchecked Sendable {
     /// 
     /// - Throws: Fatal error if service is not registered or cast fails
     func resolve<T>(_ type: T.Type) -> T {
-        let key = String(describing: type)
+        let key = ObjectIdentifier(type)
         lock.lock()
         defer { lock.unlock() }
         
@@ -244,7 +245,7 @@ private final class Storage: @unchecked Sendable {
         }
         
         guard let instance = factory() as? T else {
-            fatalError("Failed to cast service \(key) to expected type \(type)")
+            fatalError("Failed to cast service to expected type \(type)")
         }
         
         return instance
