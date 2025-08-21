@@ -62,5 +62,10 @@ struct InfoCommand: ParsableCommand {
         print("  • Error retry mechanisms")
         print("")
         print("Use --help to view detailed help information")
+        print("")
+        print("Examples:")
+        print("  m3u8-utility info")
+        print("  m3u8-utility download https://example.com/video.m3u8 --name my-video -v")
+        print("  m3u8-utility extract \"https://example.com/video-page\" --methods direct-links")
     }
 } 

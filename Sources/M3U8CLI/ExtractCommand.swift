@@ -65,6 +65,9 @@ struct ExtractCommand: AsyncParsableCommand {
         guard let targetURL = URL(string: url) else {
             throw ValidationError("Invalid URL: \(url)")
         }
+        if let scheme = targetURL.scheme?.lowercased(), scheme != "http" && scheme != "https" {
+            throw ValidationError("Unsupported URL scheme: \(scheme). Only http/https are supported.")
+        }
         
         print("🔍 Starting M3U8 link extraction from: \(targetURL)")
         

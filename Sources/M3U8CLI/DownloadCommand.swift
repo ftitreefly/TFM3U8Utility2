@@ -64,7 +64,7 @@ struct DownloadCommand: AsyncParsableCommand {
     /// If not provided, the original filename from the URL will be used.
     /// 
     /// Example: `--name my-video` will save the file as `my-video.mp4`
-    @Option(name: [.short, .long], help: "Output filename, file extension is *only* .mp4")
+    @Option(name: [.short, .long], help: "Output filename (saved as .mp4)")
     var name: String?
 
     /// Enable verbose output for detailed download information
@@ -88,6 +88,9 @@ struct DownloadCommand: AsyncParsableCommand {
     ///   - Various network and file system errors during download
     mutating func run() async throws {
 
+        // Ensure DI is configured (idempotent)
+        await TFM3U8Utility.initialize()
+
         let outputDirectory: URL
         do {
             let paths = try await GlobalDependencies.shared.resolve(PathProviderProtocol.self)
@@ -98,6 +101,10 @@ struct DownloadCommand: AsyncParsableCommand {
             
         guard let downloadURL = URL(string: url) else {
             OutputFormatter.printError("Invalid URL format")
+            throw ExitCode.failure
+        }
+        if let scheme = downloadURL.scheme?.lowercased(), scheme != "http" && scheme != "https" {
+            OutputFormatter.printError("Unsupported URL scheme: \(scheme). Only http/https are supported.")
             throw ExitCode.failure
         }
      
@@ -112,7 +119,12 @@ struct DownloadCommand: AsyncParsableCommand {
             )
             if verbose { OutputFormatter.printSuccess("Download completed!") }
         } catch {
-            OutputFormatter.printError("Download failed: \(error.localizedDescription)")
+            if let tfErr = error as? (any TFM3U8Error) {
+                let suggestion = tfErr.recoverySuggestion ?? ""
+                OutputFormatter.printError("Download failed [\(tfErr.code)]: \(tfErr.localizedDescription)\(suggestion.isEmpty ? "" : " | Suggestion: \(suggestion)")")
+            } else {
+                OutputFormatter.printError("Download failed: \(error.localizedDescription)")
+            }
             throw ExitCode.failure
         }
     }
