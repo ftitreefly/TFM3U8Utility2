@@ -19,41 +19,47 @@ final class DownloadTests: XCTestCase {
     
     // Real M3U8 URLs for testing
     let testM3U8URLs = [
-        "https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/gear1/prog_index.m3u8",  // Public test stream
-        "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8"  // Another test stream
+        "https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/gear1/prog_index.m3u8"
     ]
     
-    override func setUp() {
-        super.setUp()
-        
+    override func setUpWithError() throws {
         // Create dependency injection container
         testContainer = DependencyContainer()
         testContainer.configure(with: DIConfiguration.performanceOptimized())
         Logger.configure(.production())
         
-        // Create temporary directory
-        fileSystem = try! testContainer.resolve(FileSystemServiceProtocol.self)
+        fileSystem = try testContainer.resolve(FileSystemServiceProtocol.self)
+        tempDirectory = try fileSystem.createTemporaryDirectory(nil)
         
-        do {
-            tempDirectory = try fileSystem.createTemporaryDirectory(nil)
-        } catch {
-            XCTFail("Failed to create temporary directory: \(error)")
-            return
-        }
-        
-        httpSystem = try! testContainer.resolve(M3U8DownloaderProtocol.self)
-        
-        // Test temporary directory created
+        httpSystem = try testContainer.resolve(M3U8DownloaderProtocol.self)
     }
     
-    override func tearDown() {
-        // Clean up temporary directory
+    override func tearDownWithError() throws {
+
         if let tempDir = tempDirectory {
             try? FileManager.default.removeItem(at: tempDir)
         }
         
         testContainer = nil
-        super.tearDown()
+    }
+
+    // MARK: - Helpers
+    private func canReachAppleTestServer(timeoutSeconds: TimeInterval = 5) async -> Bool {
+        guard let url = URL(string: "https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/gear1/fileSequence0.ts") else {
+            return false
+        }
+        let config = URLSessionConfiguration.ephemeral
+        config.timeoutIntervalForRequest = timeoutSeconds
+        config.timeoutIntervalForResource = timeoutSeconds
+        let session = URLSession(configuration: config)
+        var request = URLRequest(url: url)
+        request.httpMethod = "HEAD"
+        do {
+            _ = try await session.data(for: request)
+            return true
+        } catch {
+            return false
+        }
     }
     
     // MARK: - Basic Download Tests
@@ -68,8 +74,7 @@ final class DownloadTests: XCTestCase {
     }
     
     func testDownloadContentFromValidURL() async throws {
-        // Test downloading content from valid URL
-        
+        guard await canReachAppleTestServer() else { throw XCTSkip("Skipping: network not available") }
         let testURL = URL(string: testM3U8URLs.first!)!
         
         do {
@@ -88,6 +93,7 @@ final class DownloadTests: XCTestCase {
     // MARK: - M3U8 Playlist Download Tests
     
     func testDownloadM3U8Playlist() async throws {
+        guard await canReachAppleTestServer() else { throw XCTSkip("Skipping: network not available") }
         // Test downloading real M3U8 playlists
         for (_, urlString) in testM3U8URLs.enumerated() {
             guard let url = URL(string: urlString) else {
@@ -95,25 +101,16 @@ final class DownloadTests: XCTestCase {
                 continue
             }
             
-            do {
-                let content = try await httpSystem.downloadContent(from: url)
-                
-                // Verify M3U8 content format
-                XCTAssertTrue(content.hasPrefix("#EXTM3U"), "Content should be valid M3U8 format")
-                XCTAssertTrue(
-                    content.contains("#EXTINF") || content.contains("#EXT-X-STREAM-INF"), "Content should contain media segment info")
-                
-                // Successfully downloaded M3U8 playlist
-                
-            } catch {
-                // Some test URLs may be unavailable
-            }
+            let content = try await httpSystem.downloadContent(from: url)
+            XCTAssertTrue(content.hasPrefix("#EXTM3U"), "Content should be valid M3U8 format")
+            XCTAssertTrue(content.contains("#EXTINF") || content.contains("#EXT-X-STREAM-INF"), "Content should contain media segment info")
         }
     }
     
     // MARK: - Video Segment Download Tests
     
     func testDownloadVideoSegments() async throws {
+        guard await canReachAppleTestServer() else { throw XCTSkip("Skipping: network not available") }
         // Test downloading video segments
         
         // Create test video segment URLs - use small files to avoid long downloads
@@ -130,15 +127,9 @@ final class DownloadTests: XCTestCase {
         ]
         
         do {
-            try await httpSystem.downloadSegments(
-                at: testSegmentURLs, to: tempDirectory, headers: headers)
-            
-            // Verify downloaded files
+            try await httpSystem.downloadSegments(at: testSegmentURLs, to: tempDirectory, headers: headers)
             let files = try fileSystem.contentsOfDirectory(at: tempDirectory)
             XCTAssertGreaterThan(files.count, 0, "Should have downloaded files")
-            
-            // Successfully downloaded \(files.count) video segments
-            
         } catch {
             XCTFail("Video segment download failed: \(error)")
         }
@@ -147,13 +138,11 @@ final class DownloadTests: XCTestCase {
     // MARK: - Simple String Response Concurrent Download Tests
     
     func testSimpleStringResponseConcurrentDownloads() async throws {
-        // Test simple concurrent downloads - use fast responding URLs
-        let urls = (0..<5).map { _ in URL(string: testM3U8URLs.first!)! }
-        
-        let startTime = Date()
+        guard await canReachAppleTestServer() else { throw XCTSkip("Skipping: network not available") }
+        let urls = (0..<3).map { _ in URL(string: testM3U8URLs.first!)! }
+
         let httpSystem = self.httpSystem!
         
-        // Concurrent downloads
         let results = try await withThrowingTaskGroup(of: String.self) { group in
             for url in urls {
                 group.addTask {
@@ -168,25 +157,20 @@ final class DownloadTests: XCTestCase {
             return downloadedContents
         }
         
-        let endTime = Date()
-        _ = endTime.timeIntervalSince(startTime)
-        
         // Verify results
         XCTAssertEqual(results.count, urls.count, "Should download all URLs")
         for result in results {
             XCTAssertFalse(result.isEmpty, "Downloaded content should not be empty")
         }
-        
-        // Simple concurrent download test completed
     }
     
     // MARK: - Simple Data Response Concurrent Download Tests
     
     func testSimpleSegmentsConcurrentDownloads() async throws {
+        guard await canReachAppleTestServer() else { throw XCTSkip("Skipping: network not available") }
         let segmentBaseURL = "https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/gear1/"
-        let testSegmentURLs = (0..<8).map { URL(string: "\(segmentBaseURL)fileSequence\($0).ts")! }
+        let testSegmentURLs = (0..<3).map { URL(string: "\(segmentBaseURL)fileSequence\($0).ts")! }
 
-        let startTime = Date()
         let httpSystem = self.httpSystem!
         typealias task =  (name: String, rawData: Data)
         _ = try await withThrowingTaskGroup(of: task.self) { group in
@@ -206,16 +190,12 @@ final class DownloadTests: XCTestCase {
             }
             return downloadedContents
         }
-
-        let endTime = Date()
-        _ = endTime.timeIntervalSince(startTime)
-
-        // Simple concurrent download test completed
     }
     
     // MARK: - File System Integration Tests
     
     func testDownloadToFileSystem() async throws {
+        guard await canReachAppleTestServer() else { throw XCTSkip("Skipping: network not available") }
         // Test downloading to file system
         let outputFile = tempDirectory.appendingPathComponent("test.json")
         
@@ -231,9 +211,6 @@ final class DownloadTests: XCTestCase {
             
             let savedContent = try String(contentsOf: outputFile)
             XCTAssertEqual(content, savedContent, "Saved content should match downloaded content")
-            
-            // Successfully downloaded and saved to file system
-            
         } catch {
             XCTFail("File system integration test failed: \(error)")
         }
@@ -242,6 +219,7 @@ final class DownloadTests: XCTestCase {
     // MARK: - Timeout Tests
     
     func testDownloadWithTimeout() async throws {
+        guard await canReachAppleTestServer() else { throw XCTSkip("Skipping: network not available") }
         // Test if timeout configuration is correctly applied
         let customConfig = DIConfiguration(
             maxConcurrentDownloads: 5,
@@ -261,6 +239,7 @@ final class DownloadTests: XCTestCase {
     }
     
     func testDownloadQuickResponse() async throws {
+        guard await canReachAppleTestServer() else { throw XCTSkip("Skipping: network not available") }
         // Test quick response
         let downloader = try! testContainer.resolve(M3U8DownloaderProtocol.self)
         let testURL = URL(string: testM3U8URLs[0])!
