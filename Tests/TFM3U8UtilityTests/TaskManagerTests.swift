@@ -9,6 +9,7 @@ import Foundation
 import XCTest
 
 @testable import TFM3U8Utility
+import enum TFM3U8Utility.Method
 
 final class TaskManagerTests: XCTestCase, @unchecked Sendable {
     
@@ -28,30 +29,21 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
     // When enableFastTesting = true: downloadDelay = 0.1s, sleep = 0.05s
     // When enableFastTesting = false: downloadDelay = 1.0s, sleep = 0.1s
 
-    override func setUp() {
-        super.setUp()
+    override func setUpWithError() throws {
         testContainer = DependencyContainer()
         testContainer.configure(with: DIConfiguration.performanceOptimized())
         // Silence logs in tests (avoid DEBUG noise)
         Logger.configure(.production())
         
         // Setup real file system for temporary directory
-        fileSystem = try! testContainer.resolve(FileSystemServiceProtocol.self)
-        
-        do {
-            tempDirectory = try fileSystem.createTemporaryDirectory("TaskManagerTests")
-        } catch {
-            XCTFail("Failed to create temporary directory: \(error)")
-            return
-        }
+        fileSystem = try testContainer.resolve(FileSystemServiceProtocol.self)
+        tempDirectory = try fileSystem.createTemporaryDirectory("TaskManagerTests")
         
         // Setup mock services
         setupMockServices()
-        
-        // Test temporary directory created
     }
 
-    override func tearDown() {
+    override func tearDownWithError() throws {
         // Clean up temporary directory
         if let tempDir = tempDirectory {
             try? FileManager.default.removeItem(at: tempDir)
@@ -63,8 +55,6 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
         mockProcessor = nil
         mockFileSystem = nil
         taskManager = nil
-        
-        super.tearDown()
     }
     
     // MARK: - Setup Methods
@@ -110,14 +100,7 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
         // When & Then - This test will fail due to real network calls
         // We expect it to throw an error for network requests
         do {
-            let request = TaskRequest(
-                url: url,
-                baseUrl: nil,
-                savedDirectory: tempDirectory,
-                fileName: "test.mp4",
-                method: .web,
-                verbose: false
-            )
+            let request = makeRequest(url: url, fileName: "test.mp4", method: Method.web)
             try await taskManager.createTask(request)
             XCTFail("Expected task to fail due to network issues")
         } catch {
@@ -139,14 +122,7 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
         
         // When & Then - This test will also fail due to real network calls for segments
         do {
-            let request = TaskRequest(
-                url: localM3U8Path,
-                baseUrl: nil,
-                savedDirectory: tempDirectory,
-                fileName: "test.mp4",
-                method: .local,
-                verbose: false
-            )
+            let request = makeRequest(url: localM3U8Path, fileName: "test.mp4", method: Method.local)
             try await taskManager.createTask(request)
             XCTFail("Expected task to fail due to segment download issues")
         } catch {
@@ -205,14 +181,7 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
         // Test concurrent task limit by starting tasks simultaneously
         async let task1: Void = {
             do {
-                let request = TaskRequest(
-                    url: url1,
-                    baseUrl: nil,
-                    savedDirectory: self.tempDirectory,
-                    fileName: "test1.mp4",
-                    method: .web,
-                    verbose: false
-                )
+                let request = makeRequest(url: url1, fileName: "test1.mp4", method: Method.web)
                 try await self.taskManager.createTask(request)
             } catch {
                 // Expected to fail due to network issues
@@ -221,14 +190,7 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
         
         async let task2: Void = {
             do {
-                let request = TaskRequest(
-                    url: url2,
-                    baseUrl: nil,
-                    savedDirectory: self.tempDirectory,
-                    fileName: "test2.mp4",
-                    method: .web,
-                    verbose: false
-                )
+                let request = makeRequest(url: url2, fileName: "test2.mp4", method: Method.web)
                 try await self.taskManager.createTask(request)
             } catch {
                 // Expected to fail due to network issues
@@ -240,14 +202,7 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
         
         // Third task should fail due to concurrent task limit
         do {
-            let request = TaskRequest(
-                url: url3,
-                baseUrl: nil,
-                savedDirectory: tempDirectory,
-                fileName: "test3.mp4",
-                method: .web,
-                verbose: false
-            )
+            let request = makeRequest(url: url3, fileName: "test3.mp4", method: Method.web)
             try await taskManager.createTask(request)
             XCTFail("Third task should fail due to concurrency limit")
         } catch let error as ProcessingError {
@@ -271,14 +226,7 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
         
         // When & Then
         do {
-            let request = TaskRequest(
-                url: url,
-                baseUrl: nil,
-                savedDirectory: tempDirectory,
-                fileName: "test.mp4",
-                method: .web,
-                verbose: false
-            )
+            let request = makeRequest(url: url, fileName: "test.mp4", method: Method.web)
             try await taskManager.createTask(request)
             XCTFail("Should throw network error")
         } catch {
@@ -298,14 +246,7 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
         
         // When & Then
         do {
-            let request = TaskRequest(
-                url: url,
-                baseUrl: nil,
-                savedDirectory: tempDirectory,
-                fileName: "test.mp4",
-                method: .web,
-                verbose: false
-            )
+            let request = makeRequest(url: url, fileName: "test.mp4", method: Method.web)
             try await taskManager.createTask(request)
             XCTFail("Should throw parsing error")
         } catch {
@@ -326,14 +267,7 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
         
         // When
         do {
-            let request = TaskRequest(
-                url: url,
-                baseUrl: nil,
-                savedDirectory: tempDirectory,
-                fileName: "test.mp4",
-                method: .web,
-                verbose: false
-            )
+            let request = makeRequest(url: url, fileName: "test.mp4", method: Method.web)
             try await taskManager.createTask(request)
             XCTFail("Expected task to fail due to network issues")
         } catch {
@@ -355,14 +289,7 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
         
         // When
         do {
-            let request = TaskRequest(
-                url: url,
-                baseUrl: nil,
-                savedDirectory: tempDirectory,
-                fileName: "test.mp4",
-                method: .web,
-                verbose: false
-            )
+            let request = makeRequest(url: url, fileName: "test.mp4", method: Method.web)
             try await taskManager.createTask(request)
             XCTFail("Should throw error")
         } catch {
@@ -394,14 +321,7 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
         
         // This task will fail due to network issues, but we can still test metrics
         do {
-            let request = TaskRequest(
-                url: url,
-                baseUrl: nil,
-                savedDirectory: tempDirectory,
-                fileName: "test.mp4",
-                method: .web,
-                verbose: false
-            )
+            let request = makeRequest(url: url, fileName: "test.mp4", method: Method.web)
             try await taskManager.createTask(request)
             XCTFail("Expected task to fail due to network issues")
         } catch {
@@ -418,6 +338,17 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
     
     // MARK: - Helper Methods
     
+    private func makeRequest(url: URL, fileName: String, method: Method, baseUrl: URL? = nil) -> TaskRequest {
+        return TaskRequest(
+            url: url,
+            baseUrl: baseUrl,
+            savedDirectory: tempDirectory,
+            fileName: fileName,
+            method: method,
+            verbose: false
+        )
+    }
+
     private func createMockM3U8Content() -> String {
         return """
         #EXTM3U
