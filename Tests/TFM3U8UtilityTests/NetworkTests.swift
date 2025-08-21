@@ -20,28 +20,26 @@ final class NetworkTests: XCTestCase {
     // MARK: - Basic Network Tests
     
     func testBasicM3U8Download() async throws {
+        guard await canReachAppleTestServer() else { throw XCTSkip("Skipping: network not available") }
         // Use the most stable Apple test stream
         guard let url = URL(string: testURLs[0]) else {
             XCTFail("Unable to create test URL")
             return
         }
         
-        // Starting M3U8 download test
-        
         do {
             // Use URLSession for direct download test
-            let (data, response) = try await URLSession.shared.data(from: url)
+            let session = makeEphemeralSession(timeoutSeconds: 10)
+            let (data, response) = try await session.data(from: url)
             
             guard let httpResponse = response as? HTTPURLResponse else {
                 XCTFail("Response is not an HTTP response")
                 return
             }
             
-            // HTTP status code: \(httpResponse.statusCode)
             XCTAssertEqual(httpResponse.statusCode, 200, "HTTP status code should be 200")
             
             let content = String(data: data, encoding: .utf8) ?? ""
-            // Downloaded content length: \(content.count) characters
             
             // Validate M3U8 format
             XCTAssertTrue(content.hasPrefix("#EXTM3U"), "M3U8 file should start with #EXTM3U")
@@ -54,17 +52,16 @@ final class NetworkTests: XCTestCase {
                 XCTAssertTrue(content.contains("#EXTINF"), "Media playlist should contain segment info")
             }
             
-            // M3U8 download test successful
-            
         } catch {
-            // Network test failed: \(error) - might be due to network connectivity issues
+            throw XCTSkip("Skipping: transient network error \(error)")
         }
     }
     
     func testMultipleM3U8URLs() async throws {
-        // Starting multiple M3U8 URL tests
+        guard await canReachAppleTestServer() else { throw XCTSkip("Skipping: network not available") }
         
         var successCount = 0
+        let session = makeEphemeralSession(timeoutSeconds: 10)
         
         for urlString in testURLs {
             guard let url = URL(string: urlString) else {
@@ -72,7 +69,7 @@ final class NetworkTests: XCTestCase {
             }
             
             do {
-                let (data, response) = try await URLSession.shared.data(from: url)
+                let (data, response) = try await session.data(from: url)
                 
                 if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 {
                     let content = String(data: data, encoding: .utf8) ?? ""
@@ -80,30 +77,28 @@ final class NetworkTests: XCTestCase {
                         successCount += 1
                     }
                 }
-                
             } catch {
-                // URL \(index + 1) network error
+                // ignore individual failures; overall check below
             }
             
-            // No delay needed in tests
         }
         
-        // Test results: \(successCount)/\(testURLs.count) URLs successful
+        XCTAssertGreaterThan(successCount, 0, "At least one M3U8 download should succeed")
     }
     
     // MARK: - M3U8 Content Analysis
     
     func testM3U8ContentAnalysis() async throws {
+        guard await canReachAppleTestServer() else { throw XCTSkip("Skipping: network not available") }
         let urlString = testURLs[0] // Use the most stable Apple test stream
         guard let url = URL(string: urlString) else {
             XCTFail("Unable to create test URL")
             return
         }
         
-        // Starting M3U8 content analysis
-        
         do {
-            let (data, _) = try await URLSession.shared.data(from: url)
+            let session = makeEphemeralSession(timeoutSeconds: 10)
+            let (data, _) = try await session.data(from: url)
             let content = String(data: data, encoding: .utf8) ?? ""
             
             // M3U8 content analysis
@@ -146,10 +141,8 @@ final class NetworkTests: XCTestCase {
                 }
             }
             
-            // M3U8 content analysis completed
-            
         } catch {
-            // Content analysis failed
+            throw XCTSkip("Skipping: transient network error \(error)")
         }
     }
     
@@ -161,7 +154,7 @@ final class NetworkTests: XCTestCase {
         // Testing invalid URL error handling
         
         do {
-            _ = try await URLSession.shared.data(from: invalidURL)
+            _ = try await makeEphemeralSession(timeoutSeconds: 5).data(from: invalidURL)
             XCTFail("Should throw network error")
         } catch {
             // Correctly caught network error
@@ -171,34 +164,33 @@ final class NetworkTests: XCTestCase {
     // MARK: - Performance Tests
     
     func testDownloadPerformance() async throws {
+        guard await canReachAppleTestServer() else { throw XCTSkip("Skipping: network not available") }
 
         let url = URL(string: "https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/gear1/fileSequence0.ts")!
-        
-        // Starting download performance test
         
         let startTime = CFAbsoluteTimeGetCurrent()
         
         do {
-            let (data, _) = try await URLSession.shared.data(from: url)
+            let session = makeEphemeralSession(timeoutSeconds: 10)
+            let (data, _) = try await session.data(from: url)
             let endTime = CFAbsoluteTimeGetCurrent()
             
             let downloadTime = endTime - startTime
             let dataSize = data.count
             let speed = Double(dataSize) / downloadTime / 1024 // KB/s
             
-            // Download performance test completed
-            
             XCTAssertGreaterThan(dataSize, 0, "Downloaded data should be greater than 0")
             XCTAssertGreaterThan(speed, 0, "Download speed should be greater than 0")
             
         } catch {
-            // Performance test failed
+            throw XCTSkip("Skipping: transient network error \(error)")
         }
     }
     
     // MARK: - Integration with TFM3U8Utility
     
     func testTFM3U8UtilityIntegration() async throws {
+        guard await canReachAppleTestServer() else { throw XCTSkip("Skipping: network not available") }
         // Testing integration with TFM3U8Utility
         
         // Use TFM3U8Utility for complete testing
@@ -206,7 +198,8 @@ final class NetworkTests: XCTestCase {
         
         do {
             // Directly test M3U8Parser instead of the entire TFM3U8Utility
-            let (data, _) = try await URLSession.shared.data(from: url)
+            let session = makeEphemeralSession(timeoutSeconds: 10)
+            let (data, _) = try await session.data(from: url)
             let content = String(data: data, encoding: .utf8) ?? ""
             
             let parser = M3U8Parser()
@@ -225,20 +218,31 @@ final class NetworkTests: XCTestCase {
                 XCTFail("Parsing should not be cancelled")
             }
             
-            // M3U8Parser integration test successful
-            
         } catch {
-            // Integration test failed
+            throw XCTSkip("Skipping: transient network error \(error)")
         }
     }
     
-    // MARK: - Utility Methods
-    
-    override func setUp() {
-        super.setUp()
+    // MARK: - Helpers
+    private func makeEphemeralSession(timeoutSeconds: TimeInterval) -> URLSession {
+        let config = URLSessionConfiguration.ephemeral
+        config.timeoutIntervalForRequest = timeoutSeconds
+        config.timeoutIntervalForResource = timeoutSeconds
+        return URLSession(configuration: config)
     }
     
-    override func tearDown() {
-        super.tearDown()
+    private func canReachAppleTestServer(timeoutSeconds: TimeInterval = 5) async -> Bool {
+        guard let url = URL(string: "https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/gear1/fileSequence0.ts") else {
+            return false
+        }
+        let session = makeEphemeralSession(timeoutSeconds: timeoutSeconds)
+        var request = URLRequest(url: url)
+        request.httpMethod = "HEAD"
+        do {
+            _ = try await session.data(for: request)
+            return true
+        } catch {
+            return false
+        }
     }
 }
