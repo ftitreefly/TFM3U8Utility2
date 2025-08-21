@@ -54,8 +54,8 @@ public struct TFM3U8Utility {
     /// config.maxConcurrentDownloads = 10
     /// await TFM3U8Utility.initialize(with: config)
     /// ```
-    @MainActor public static func initialize(with configuration: DIConfiguration = DIConfiguration.performanceOptimized()) {
-        Dependencies.configure(with: configuration)
+    @MainActor public static func initialize(with configuration: DIConfiguration = DIConfiguration.performanceOptimized()) async {
+        await GlobalDependencies.shared.configure(with: configuration)
     }
     
     /// Downloads M3U8 content from a URL and processes it using dependency injection
@@ -98,11 +98,11 @@ public struct TFM3U8Utility {
     ) async throws {
         Logger.configure(verbose ? .verbose() : .production())
         
-        await Dependencies.configure(with: configuration)
+        await GlobalDependencies.shared.configure(with: configuration)
         
         Logger.debug("Concurrent file downloads count: \(configuration.maxConcurrentDownloads), single file download timeout: \(configuration.downloadTimeout) seconds", category: .download)
         // Use dependency injection for file system operations
-        let fileSystem = try await Dependencies.resolve(FileSystemServiceProtocol.self)
+        let fileSystem = try await GlobalDependencies.shared.resolve(FileSystemServiceProtocol.self)
         
         // Create output directory if needed
         if !fileSystem.fileExists(at: savedDirectory) {
@@ -114,7 +114,7 @@ public struct TFM3U8Utility {
         }
         
         // Use the injected task manager
-        let taskManager = try await Dependencies.resolve(TaskManagerProtocol.self)
+        let taskManager = try await GlobalDependencies.shared.resolve(TaskManagerProtocol.self)
         let baseUrl = method.baseURL ?? url.deletingLastPathComponent()
         
         let request = TaskRequest(
@@ -174,9 +174,9 @@ public struct TFM3U8Utility {
         method: Method = .web,
         configuration: DIConfiguration = DIConfiguration.performanceOptimized()
     ) async throws -> M3U8Parser.ParserResult {
-        await Dependencies.configure(with: configuration)
-        let downloader = try await Dependencies.resolve(M3U8DownloaderProtocol.self)
-        let parser = try await Dependencies.resolve(M3U8ParserServiceProtocol.self)
+        await GlobalDependencies.shared.configure(with: configuration)
+        let downloader = try await GlobalDependencies.shared.resolve(M3U8DownloaderProtocol.self)
+        let parser = try await GlobalDependencies.shared.resolve(M3U8ParserServiceProtocol.self)
         
         do {
             let baseURL: URL

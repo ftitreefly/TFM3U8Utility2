@@ -41,12 +41,6 @@ public final class DependencyContainer: Sendable {
     /// Thread-safe storage for registered services
     private let storage: Storage
     
-    /// Shared instance for convenience (can be replaced for testing)
-    /// 
-    /// This shared instance provides global access to the dependency container.
-    /// It can be replaced for testing purposes to inject mock services.
-    @MainActor public static var shared = DependencyContainer()
-    
     /// Initializes a new dependency container
     /// 
     /// Creates a fresh container instance with thread-safe storage.
@@ -312,48 +306,27 @@ public extension DependencyContainer {
     }
 }
 
-// MARK: - Global Access (Optional)
+// MARK: - Global DI (Actor-isolated)
 
-/// Global dependency resolver for convenience
-/// 
-/// This global property provides easy access to the shared dependency container.
-/// It can be replaced for testing purposes to inject mock services.
-/// 
-/// ## Usage Example
-/// ```swift
-/// // Use the global container
-/// let taskManager = Dependencies.resolve(TaskManagerProtocol.self)
-/// 
-/// // Configure the global container
-/// await Dependencies.configure(with: DIConfiguration.performanceOptimized())
-/// 
-/// // Replace for testing
-/// Dependencies = mockContainer
-/// ```
-@MainActor public var Dependencies: DependencyContainer { // swiftlint:disable:this identifier_name
-    get { DependencyContainer.shared }
-    set { DependencyContainer.shared = newValue }
-}
-
-// MARK: - Global Dependencies Extension
-
-@MainActor public extension DependencyContainer {
-    /// Configures the global dependency container
-    /// 
-    /// This method configures the shared dependency container with the specified
-    /// configuration. It should be called once at the start of the application.
-    /// 
-    /// - Parameter configuration: Configuration settings for the services
-    /// 
-    /// ## Usage Example
-    /// ```swift
-    /// // Configure with performance-optimized settings
-    /// await Dependencies.configure(with: DIConfiguration.performanceOptimized())
-    /// 
-    /// // Now use the configured services
-    /// let downloader = await Dependencies.resolve(M3U8DownloaderProtocol.self)
-    /// ```
-    func configureGlobal(with configuration: DIConfiguration) {
-        self.configure(with: configuration)
+/// Global, actor-isolated access to dependency injection container
+public actor GlobalDependencies {
+    public static let shared = GlobalDependencies()
+    private var container: DependencyContainer = DependencyContainer()
+    
+    public func configure(with configuration: DIConfiguration) {
+        container.configure(with: configuration)
+    }
+    
+    public func resolve<T>(_ type: T.Type) throws -> T {
+        try container.resolve(type)
+    }
+    
+    public func reset() {
+        container.reset()
+    }
+    
+    /// Replace the underlying container for testing
+    public func replaceShared(forTesting newContainer: DependencyContainer) {
+        container = newContainer
     }
 }
