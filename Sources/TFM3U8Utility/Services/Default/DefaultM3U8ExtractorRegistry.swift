@@ -78,7 +78,9 @@ public final class DefaultM3U8ExtractorRegistry: M3U8ExtractorRegistryProtocol, 
     }
     
     /// Registers a new extractor with a specific priority (higher wins).
-    /// Not part of the protocol to keep API stable; provided as an extension API.
+    /// 
+    /// Not part of the protocol to keep API surface minimal; provided as
+    /// an extension API for advanced scenarios.
     public func registerExtractor(_ extractor: M3U8LinkExtractorProtocol, priority: Int) {
         let domains = extractor.getSupportedDomains()
         let name = String(describing: type(of: extractor))
@@ -196,15 +198,13 @@ public final class DefaultM3U8ExtractorRegistry: M3U8ExtractorRegistryProtocol, 
         extractorMetadata["Default@*#\(Int.min)"] = info
     }
     
-    /// Finds the appropriate extractor for a given host
+    /// Finds candidate extractor registrations for a host
     /// 
-    /// This method searches for an extractor that can handle the given host.
-    /// It first looks for exact domain matches, then for partial matches,
-    /// and finally falls back to the default extractor.
+    /// The result is a deduplicated list of registrations that match the host
+    /// by exact domain, suffix domain (subdomain), or wildcard.
     /// 
-    /// - Parameter host: The host to find an extractor for
-    /// 
-    /// - Returns: The appropriate extractor
+    /// - Parameter host: The host to evaluate
+    /// - Returns: Matching registrations (not sorted)
     private func candidateRegistrations(forHost host: String) -> [Registration] {
         var result: [Registration] = []
         

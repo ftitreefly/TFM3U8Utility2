@@ -65,9 +65,10 @@ public final class DefaultM3U8LinkExtractor: M3U8LinkExtractorProtocol {
     
     /// Initializes a new default M3U8 link extractor
     /// 
-    /// - Parameter supportedDomains: List of domains this extractor can handle
-    /// Initialize a default extractor
-    /// - Parameter supportedDomains: Domain whitelist; empty means all
+    /// - Parameters:
+    ///   - supportedDomains: Domain whitelist; empty means all domains are allowed
+    ///   - networkClient: Networking client used to fetch page content
+    ///   - logger: Logger implementation for diagnostic output
     public init(
         supportedDomains: [String] = [],
         networkClient: NetworkClientProtocol = DefaultNetworkClient(configuration: .performanceOptimized()),
@@ -148,11 +149,12 @@ public final class DefaultM3U8LinkExtractor: M3U8LinkExtractorProtocol {
     // MARK: - Private Methods
     
     /// Downloads page content from the given URL
-    /// Download HTML content for a given page
+    /// 
     /// - Parameters:
     ///   - url: Page URL
     ///   - options: Extraction options (timeout, headers, UA)
     /// - Returns: UTF-8 content string
+    /// - Throws: `NetworkError` for non-200 responses; `ParsingError` on decoding failure
     private func downloadPageContent(from url: URL, options: LinkExtractionOptions) async throws -> String {
         var request = URLRequest(url: url)
         request.timeoutInterval = options.timeout

@@ -20,6 +20,15 @@ public enum Method: Sendable, Equatable {
   case local
 }
 
+/// Usage Example
+/// ```swift
+/// // Web download
+/// try await TFM3U8Utility.download(.web, url: remoteURL, savedDirectory: outputDir)
+/// 
+/// // Local parse
+/// let result = try await TFM3U8Utility.parse(url: localFileURL, method: .local)
+/// ```
+
 // MARK: - Download Quality
 
 /// Represents different quality options for downloads
@@ -94,6 +103,7 @@ public struct DownloadConfiguration: Sendable {
   
   /// Custom headers to include in HTTP requests
   public let httpHeaders: [String: String]
+  /// Note: Empty `httpHeaders` falls back to a standard browser User-Agent.
   
   /// Default configuration with sensible defaults
   /// 
@@ -103,7 +113,7 @@ public struct DownloadConfiguration: Sendable {
   /// - 3 retry attempts
   /// - Auto quality selection
   /// - Cleanup enabled
-  /// - Standard browser User-Agent
+  /// - Standard browser User-Agent (applied when no custom headers provided)
   public static let `default` = DownloadConfiguration(
     maxConcurrentDownloads: 3,
     connectionTimeout: 30.0,
@@ -123,7 +133,7 @@ public struct DownloadConfiguration: Sendable {
   ///   - retryAttempts: Number of retry attempts (default: 3)
   ///   - qualityPreference: Quality selection preference (default: .auto)
   ///   - cleanupTempFiles: Whether to cleanup temp files (default: true)
-  ///   - httpHeaders: Custom HTTP headers (default: empty, uses default User-Agent)
+  ///   - httpHeaders: Custom HTTP headers (default: empty; a standard User-Agent is applied)
   public init(
     maxConcurrentDownloads: Int = 3,
     connectionTimeout: TimeInterval = 30.0,
@@ -645,7 +655,7 @@ public struct M3U8Link: Sendable {
     ///   - quality: Optional quality label
     ///   - bandwidth: Optional bandwidth in bps
     ///   - extractionMethod: Method used for extraction
-    ///   - confidence: Confidence score (0.0 to 1.0)
+    ///   - confidence: Confidence score (0.0 to 1.0). Values are clamped into range.
     ///   - metadata: Additional metadata
     public init(
         url: URL,

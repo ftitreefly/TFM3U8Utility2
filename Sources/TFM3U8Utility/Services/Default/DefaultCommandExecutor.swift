@@ -83,8 +83,9 @@ public struct DefaultCommandExecutor: CommandExecutorProtocol {
   
   /// Executes a command using Process for non-curl commands
   /// 
-  /// This method uses Foundation's Process class to execute external commands
-  /// with proper output handling and error reporting.
+  /// This method uses Foundation's `Process` to execute external commands
+  /// with proper output capture and error reporting. Standard input is closed
+  /// to prevent interactive blocking in test/CI environments.
   /// 
   /// - Parameters:
   ///   - command: The full path to the executable
@@ -164,8 +165,9 @@ public struct DefaultCommandExecutor: CommandExecutorProtocol {
   
   /// Executes curl commands using URLSession for better performance
   /// 
-  /// This method parses curl arguments and uses URLSession for HTTP requests,
-  /// providing better performance and error handling than the curl command.
+  /// This method parses curl arguments and uses `URLSession` for HTTP requests,
+  /// providing better performance and error handling than shelling out to curl.
+  /// Only a minimal subset of curl flags is supported here (e.g., -H for headers).
   /// 
   /// - Parameter arguments: Array of curl command-line arguments
   /// 

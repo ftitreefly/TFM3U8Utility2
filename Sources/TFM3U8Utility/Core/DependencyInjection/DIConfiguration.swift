@@ -61,7 +61,11 @@ public struct DIConfiguration: Sendable {
     ///   - curlPath: Path to curl executable (optional)
     ///   - defaultHeaders: Default HTTP headers (defaults to standard browser headers)
     ///   - maxConcurrentDownloads: Maximum concurrent downloads (default: 16)
-    ///   - downloadTimeout: Download timeout in seconds (default: 300)
+    ///   - downloadTimeout: Per-request timeout in seconds (default: 300)
+    ///   - resourceTimeout: Overall resource timeout in seconds (default: equals downloadTimeout)
+    ///   - retryAttempts: Max automatic retry attempts for transient failures (default: 0)
+    ///   - retryBackoffBase: Base seconds for exponential backoff (default: 0.5)
+    ///   - logLevel: Minimum log level for logger (default: .info)
     public init(
         ffmpegPath: String? = nil,
         curlPath: String? = nil,

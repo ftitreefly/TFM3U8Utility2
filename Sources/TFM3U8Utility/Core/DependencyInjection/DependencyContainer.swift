@@ -126,6 +126,7 @@ public final class DependencyContainer: Sendable {
     /// for the library.
     /// 
     /// - Parameter configuration: Configuration settings for the services
+    /// - Note: This method also configures the global `Logger` based on the DI settings.
     /// 
     /// ## Usage Example
     /// ```swift

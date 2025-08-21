@@ -524,17 +524,12 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
         return formatter.string(fromByteCount: bytes)
     }
     
-    /// Download segments with progress tracking
-    /// 
-    /// This method downloads segments from a list of URLs with progress tracking,
-    /// calculating the total bytes downloaded and displaying real-time progress.
-    /// 
-    /// - Parameters:
-    ///   - urls: 
-    ///   - directory: 
-    ///   - taskInfo: 
-    /// - Throws: 
     /// Download segments with progress tracking and live throughput metrics.
+    /// 
+    /// This method downloads segments from a list of URLs with bounded concurrency,
+    /// updates `taskInfo.metrics` in real time, and prints user-friendly progress
+    /// when `verbose` is enabled.
+    /// 
     /// - Parameters:
     ///   - urls: Segment URLs
     ///   - directory: Destination directory

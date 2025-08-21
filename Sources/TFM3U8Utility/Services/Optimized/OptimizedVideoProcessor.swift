@@ -15,6 +15,10 @@ import Foundation
 /// including segment combination, decryption, and format conversion. It uses Swift 6
 /// concurrency features and hardware acceleration when available.
 /// 
+/// Notes:
+/// - Requires `DIConfiguration.ffmpegPath` to be set to a valid ffmpeg binary.
+/// - The type is a lightweight, thread-safe value type and can be freely passed across tasks.
+/// 
 /// ## Features
 /// - Concurrent segment processing
 /// - Hardware acceleration support
@@ -64,6 +68,10 @@ public struct OptimizedVideoProcessor: VideoProcessorProtocol {
     /// This method finds all `.ts` segment files in the specified directory,
     /// creates a concat file for FFmpeg, and combines them into a single video file.
     /// The process is optimized for performance and memory efficiency.
+    /// 
+    /// Preconditions:
+    /// - FFmpeg is available at `configuration.ffmpegPath`
+    /// - `directory` contains `.ts` segments in concatenation order (natural sort)
     /// 
     /// - Parameters:
     ///   - directory: The directory containing the video segments
