@@ -11,7 +11,7 @@ import XCTest
 @testable import TFM3U8Utility
 
 final class ParseTests: XCTestCase {
-    
+
     var testContainer: DependencyContainer!
     var tempDirectory: URL!
     var fileSystem: FileSystemServiceProtocol!
@@ -30,7 +30,7 @@ final class ParseTests: XCTestCase {
         // Create dependency injection container
         testContainer = DependencyContainer()
         testContainer.configure(with: DIConfiguration.performanceOptimized())
-        
+        Logger.configure(.production())
         // Create temporary directory
         fileSystem = try! testContainer.resolve(FileSystemServiceProtocol.self)
         

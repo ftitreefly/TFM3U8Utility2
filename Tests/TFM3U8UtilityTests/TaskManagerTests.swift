@@ -32,6 +32,8 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
         super.setUp()
         testContainer = DependencyContainer()
         testContainer.configure(with: DIConfiguration.performanceOptimized())
+        // Silence logs in tests (avoid DEBUG noise)
+        Logger.configure(.production())
         
         // Setup real file system for temporary directory
         fileSystem = try! testContainer.resolve(FileSystemServiceProtocol.self)
@@ -89,7 +91,8 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
             fileSystem: mockFileSystem,
             configuration: testConfiguration,
             maxConcurrentTasks: 2,
-            networkClient: DefaultNetworkClient(configuration: testConfiguration)
+            networkClient: DefaultNetworkClient(configuration: testConfiguration),
+            logger: LoggerAdapter()
         )
     }
     

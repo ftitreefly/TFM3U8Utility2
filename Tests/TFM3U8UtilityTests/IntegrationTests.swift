@@ -15,6 +15,8 @@ final class IntegrationTests: XCTestCase {
     override func setUp() {
         super.setUp()
         testContainer = DependencyContainer()
+        // Silence logs for test output
+        Logger.configure(.production())
     }
     
     override func tearDown() {
@@ -243,7 +245,8 @@ final class IntegrationTests: XCTestCase {
     
     func testExtractorVersionFromProtocol() async throws {
         // Test that extractor version comes from the extractor itself, not hardcoded
-        let registry = DefaultM3U8ExtractorRegistry()
+        let net = DefaultNetworkClient(configuration: .performanceOptimized())
+        let registry = DefaultM3U8ExtractorRegistry(defaultExtractor: DefaultM3U8LinkExtractor(networkClient: net))
         
         // Create a custom extractor with specific version
         let customExtractor = CustomVersionExtractor(version: "2.5.0")
@@ -259,7 +262,8 @@ final class IntegrationTests: XCTestCase {
     
     func testExtractorInfoFromProtocol() async throws {
         // Test that ExtractorInfo comes from the extractor itself, not constructed by registry
-        let registry = DefaultM3U8ExtractorRegistry()
+        let net = DefaultNetworkClient(configuration: .performanceOptimized())
+        let registry = DefaultM3U8ExtractorRegistry(defaultExtractor: DefaultM3U8LinkExtractor(networkClient: net))
         
         let customExtractor = CustomInfoExtractor()
         registry.registerExtractor(customExtractor)
@@ -270,7 +274,7 @@ final class IntegrationTests: XCTestCase {
         XCTAssertNotNil(customExtractorInfo)
         XCTAssertEqual(customExtractorInfo?.version, "3.0.0")
         XCTAssertEqual(customExtractorInfo?.supportedDomains, ["custom.com", "test.com"])
-        XCTAssertEqual(customExtractorInfo?.capabilities, [.directLinks, .javascriptVariables])
+        XCTAssertEqual(customExtractorInfo?.capabilities, [ExtractionMethod.directLinks, ExtractionMethod.javascriptVariables])
     }
     
     // MARK: - Helper Classes

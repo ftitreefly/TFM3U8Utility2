@@ -17,6 +17,7 @@ final class PerformanceOptimizedTests: XCTestCase {
         super.setUp()
         testContainer = DependencyContainer()
         testContainer.configure(with: DIConfiguration.performanceOptimized())
+        Logger.configure(.production())
     }
     
     override func tearDown() {
