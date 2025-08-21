@@ -127,7 +127,7 @@ extension DIConfiguration {
             resourceTimeout: 120,
             retryAttempts: 2,
             retryBackoffBase: 0.4,
-            logLevel: .debug
+            logLevel: .error
         )
     }
 }

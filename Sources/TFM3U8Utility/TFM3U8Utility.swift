@@ -96,16 +96,11 @@ public struct TFM3U8Utility {
         configuration: DIConfiguration = DIConfiguration.performanceOptimized(),
         verbose: Bool = false
     ) async throws {
-        Logger.configure(verbose ? .verbose() : .production())
-        
         await GlobalDependencies.shared.configure(with: configuration)
         
-        let log = try await GlobalDependencies.shared.resolve(LoggerProtocol.self)
-        log.debug("Concurrent file downloads count: \(configuration.maxConcurrentDownloads), single file download timeout: \(configuration.downloadTimeout) seconds", category: .download)
-        // Use dependency injection for file system operations
-        let fileSystem = try await GlobalDependencies.shared.resolve(FileSystemServiceProtocol.self)
-        
-        // Resolve default directory if not provided
+        Logger.configure(verbose ? .verbose() : .production())
+        Logger.debug("Concurrent file downloads count: \(configuration.maxConcurrentDownloads), single file download timeout: \(configuration.downloadTimeout) seconds", category: .download)
+
         let finalSavedDirectory: String
         if savedDirectory.isEmpty {
             let paths = try await GlobalDependencies.shared.resolve(PathProviderProtocol.self)
@@ -114,7 +109,7 @@ public struct TFM3U8Utility {
             finalSavedDirectory = savedDirectory
         }
         
-        // Create output directory if needed
+        let fileSystem = try await GlobalDependencies.shared.resolve(FileSystemServiceProtocol.self)
         if !fileSystem.fileExists(at: finalSavedDirectory) {
             do {
                 try fileSystem.createDirectory(at: finalSavedDirectory, withIntermediateDirectories: true)
@@ -123,7 +118,6 @@ public struct TFM3U8Utility {
             }
         }
         
-        // Use the injected task manager
         let taskManager = try await GlobalDependencies.shared.resolve(TaskManagerProtocol.self)
         let baseUrl = method.baseURL ?? url.deletingLastPathComponent()
         

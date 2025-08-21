@@ -340,24 +340,6 @@ public actor Logger: LoggerProtocol {
         log(.info, message: "📊 \(message)", category: category)
     }
     
-    /// Legacy compatibility method for vprintf
-    /// 
-    /// This method provides backward compatibility with the existing vprintf function.
-    /// It logs at the verbose level when verbose is true, otherwise does nothing.
-    /// 
-    /// - Parameters:
-    ///   - verbose: Whether to log the message
-    ///   - message: The message to log
-    ///   - category: The category of the log message (defaults to .general)
-    public static func vprintf(
-        _ verbose: Bool,
-        _ message: String,
-        category: LogCategory = .general
-    ) {
-        guard verbose else { return }
-        log(.verbose, message: message, category: category)
-    }
-    
     // MARK: - Private Methods
     
     /// Internal logging method that handles the actual log output
