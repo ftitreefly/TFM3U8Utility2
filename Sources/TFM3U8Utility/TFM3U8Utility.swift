@@ -43,6 +43,7 @@ public struct TFM3U8Utility {
     /// 
     /// - Parameter configuration: Custom configuration for dependency injection. 
     ///   If not provided, uses performance-optimized configuration by default.
+    /// - Note: Safe to call multiple times; subsequent calls reconfigure services.
     /// 
     /// ## Usage Example
     /// ```swift
@@ -70,6 +71,8 @@ public struct TFM3U8Utility {
     ///   - name: Optional name for the output file. If not provided, uses the original filename
     ///   - configuration: Configuration settings for the download operation
     ///   - verbose: Whether to output detailed information during the download process
+    /// - Precondition: When `method == .web`, network connectivity is required.
+    /// - Precondition: When `method == .local`, `url` must point to a readable local `.m3u8` file.
     /// 
     /// - Throws: 
     ///   - `FileSystemError.failedToCreateDirectory` if directory creation fails
@@ -148,6 +151,7 @@ public struct TFM3U8Utility {
     ///   - `ParsingError` if the M3U8 content cannot be parsed
     ///   - `NetworkError` if network requests fail
     ///   - `FileSystemError.failedToReadFromFile` if local file reading fails
+    /// - Precondition: When `method == .local`, `url` must be a readable file URL.
     /// 
     /// ## Usage Example
     /// ```swift
