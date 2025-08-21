@@ -120,6 +120,7 @@ public struct ConfigurationError: TFM3U8Error {
         case 5001: return "Provide a valid value for the required parameter."
         case 5002: return "Check the parameter value against the expected format."
         case 5003: return "Ensure all required configuration is provided."
+        case 5004: return "Check the service type and underlying error for more details."
         default: return "Verify configuration parameters and retry."
         }
     }
@@ -186,6 +187,22 @@ public struct ConfigurationError: TFM3U8Error {
             underlyingError: nil,
             message: "Unsupported configuration",
             parameter: configuration
+        )
+    }
+    
+    /// Creates an error for service resolution failures
+    /// 
+    /// - Parameters:
+    ///   - serviceType: The type of service that failed to resolve
+    ///   - underlyingError: The underlying error that caused the failure
+    /// 
+    /// - Returns: A configuration error with code 5004
+    public static func serviceResolutionFailed(serviceType: String, underlyingError: Error) -> ConfigurationError {
+        ConfigurationError(
+            code: 5004,
+            underlyingError: underlyingError,
+            message: "Failed to resolve service: \(serviceType)",
+            parameter: serviceType
         )
     }
 }

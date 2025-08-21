@@ -30,4 +30,3 @@ included:
 excluded:
   - .build
   - Package.resolved
-  - Tests/TFM3U8UtilityTests/Scripts 

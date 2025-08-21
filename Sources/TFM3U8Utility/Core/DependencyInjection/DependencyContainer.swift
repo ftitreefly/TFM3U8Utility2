@@ -161,9 +161,13 @@ public final class DependencyContainer: Sendable {
             guard let self = self else {
                 fatalError("Container deallocated during service creation")
             }
-            let commandExecutor = try! self.resolve(CommandExecutorProtocol.self)
-            let configuration = try! self.resolve(DIConfiguration.self)
-            let net = try! self.resolve(NetworkClientProtocol.self)
+            
+            guard let commandExecutor = try? self.resolve(CommandExecutorProtocol.self),
+                  let configuration = try? self.resolve(DIConfiguration.self),
+                  let net = try? self.resolve(NetworkClientProtocol.self) else {
+                fatalError("Failed to resolve required dependencies for M3U8DownloaderProtocol. Ensure all services are properly configured.")
+            }
+            
             return OptimizedM3U8Downloader(
                 commandExecutor: commandExecutor,
                 configuration: configuration,
@@ -177,8 +181,12 @@ public final class DependencyContainer: Sendable {
             guard let self = self else {
                 fatalError("Container deallocated during service creation")
             }
-            let commandExecutor = try! self.resolve(CommandExecutorProtocol.self)
-            let configuration = try! self.resolve(DIConfiguration.self)
+            
+            guard let commandExecutor = try? self.resolve(CommandExecutorProtocol.self),
+                  let configuration = try? self.resolve(DIConfiguration.self) else {
+                fatalError("Failed to resolve required dependencies for VideoProcessorProtocol. Ensure all services are properly configured.")
+            }
+            
             return OptimizedVideoProcessor(
                 commandExecutor: commandExecutor,
                 configuration: configuration
@@ -197,14 +205,24 @@ public final class DependencyContainer: Sendable {
             guard let self = self else {
                 fatalError("Container deallocated during service creation")
             }
+            
+            guard let downloader = try? self.resolve(M3U8DownloaderProtocol.self),
+                  let parser = try? self.resolve(M3U8ParserServiceProtocol.self),
+                  let processor = try? self.resolve(VideoProcessorProtocol.self),
+                  let fileSystem = try? self.resolve(FileSystemServiceProtocol.self),
+                  let configuration = try? self.resolve(DIConfiguration.self),
+                  let networkClient = try? self.resolve(NetworkClientProtocol.self) else {
+                fatalError("Failed to resolve required dependencies for TaskManagerProtocol. Ensure all services are properly configured.")
+            }
+            
             return OptimizedTaskManager(
-                downloader: try! self.resolve(M3U8DownloaderProtocol.self),
-                parser: try! self.resolve(M3U8ParserServiceProtocol.self),
-                processor: try! self.resolve(VideoProcessorProtocol.self),
-                fileSystem: try! self.resolve(FileSystemServiceProtocol.self),
-                configuration: try! self.resolve(DIConfiguration.self),
-                maxConcurrentTasks: (try! self.resolve(DIConfiguration.self)).maxConcurrentDownloads / 4,
-                networkClient: try! self.resolve(NetworkClientProtocol.self),
+                downloader: downloader,
+                parser: parser,
+                processor: processor,
+                fileSystem: fileSystem,
+                configuration: configuration,
+                maxConcurrentTasks: configuration.maxConcurrentDownloads / 4,
+                networkClient: networkClient,
                 logger: LoggerAdapter()
             )
         }

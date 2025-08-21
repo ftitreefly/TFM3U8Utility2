@@ -68,7 +68,11 @@ final class DownloadTests: XCTestCase {
     func testPerformanceOptimizedConfiguration() throws {
         XCTAssertNotNil(testContainer, "Test container should exist")
 
-        let config = try! testContainer.resolve(DIConfiguration.self)
+        guard let config = try? testContainer.resolve(DIConfiguration.self) else {
+            XCTFail("Configuration should not be nil")
+            return
+        }
+
         XCTAssertGreaterThan(config.maxConcurrentDownloads, 8, "Performance optimization config should have higher concurrent downloads")
         XCTAssertGreaterThan(config.downloadTimeout, 0, "Download timeout should be greater than 0")
     }
@@ -241,7 +245,10 @@ final class DownloadTests: XCTestCase {
     func testDownloadQuickResponse() async throws {
         guard await canReachAppleTestServer() else { throw XCTSkip("Skipping: network not available") }
         // Test quick response
-        let downloader = try! testContainer.resolve(M3U8DownloaderProtocol.self)
+        guard let downloader = try? testContainer.resolve(M3U8DownloaderProtocol.self) else {
+            XCTFail("Downloader should not be nil")
+            return
+        }
         let testURL = URL(string: testM3U8URLs[0])!
         
         let startTime = Date()
