@@ -11,51 +11,15 @@ import XCTest
 @testable import TFM3U8Utility
 
 final class ParseTests: XCTestCase {
-
-    var testContainer: DependencyContainer!
-    var tempDirectory: URL!
-    var fileSystem: FileSystemServiceProtocol!
-    var httpSystem: M3U8DownloaderProtocol!
+    
     var parser: M3U8Parser!
     
-    // Real M3U8 URLs for testing
-    let testM3U8URLs = [
-        "https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/gear1/prog_index.m3u8",  // Public test stream
-        "https://bitdash-a.akamaihd.net/content/sintel/hls/playlist.m3u8"  // Another test stream
-    ]
-    
-    override func setUp() {
-        super.setUp()
-        
-        // Create dependency injection container
-        testContainer = DependencyContainer()
-        testContainer.configure(with: DIConfiguration.performanceOptimized())
-        Logger.configure(.production())
-        // Create temporary directory
-        fileSystem = try! testContainer.resolve(FileSystemServiceProtocol.self)
-        
-        do {
-            tempDirectory = try fileSystem.createTemporaryDirectory(nil)
-        } catch {
-            XCTFail("Failed to create temporary directory: \(error)")
-            return
-        }
-        
-        httpSystem = try! testContainer.resolve(M3U8DownloaderProtocol.self)
+    override func setUpWithError() throws {
         parser = M3U8Parser()
-        
-        // Test temporary directory created
     }
     
-    override func tearDown() {
-        // Clean up temporary directory
-        if let tempDir = tempDirectory {
-            try? FileManager.default.removeItem(at: tempDir)
-        }
-        
+    override func tearDownWithError() throws {
         parser = nil
-        testContainer = nil
-        super.tearDown()
     }
     
     // MARK: - M3U8Parser Tests
