@@ -12,16 +12,14 @@ final class IntegrationTests: XCTestCase {
     
     var testContainer: DependencyContainer!
     
-    override func setUp() {
-        super.setUp()
+    override func setUpWithError() throws {
         testContainer = DependencyContainer()
         // Silence logs for test output
         Logger.configure(.production())
     }
     
-    override func tearDown() {
+    override func tearDownWithError() throws {
         testContainer = nil
-        super.tearDown()
     }
     
     // MARK: - Real M3U8 URLs for Testing
@@ -130,7 +128,7 @@ final class IntegrationTests: XCTestCase {
         // Configuration test passed
     }
     
-    func testSimpleDependencyInjection() {
+    func testSimpleDependencyInjection() throws {
         // Test simple dependency injection, without using complex services
         // Starting simple dependency injection test
         
@@ -142,7 +140,7 @@ final class IntegrationTests: XCTestCase {
         }
         
         // Resolve configuration
-        let config = try! container.resolve(DIConfiguration.self)
+        let config = try container.resolve(DIConfiguration.self)
         XCTAssertEqual(config.maxConcurrentDownloads, 8)
         XCTAssertEqual(config.downloadTimeout, 120)
         
@@ -332,25 +330,3 @@ final class IntegrationTests: XCTestCase {
     }
 }
 
-// MARK: - Test Helper Extensions
-
-extension IntegrationTests {
-    
-    /// Helper method to check if network connection is available
-    func isNetworkAvailable() -> Bool {
-        // Simple network check
-        return true // Assume network is available, real tests can add more complex checks
-    }
-    
-    /// Helper method to create temporary directory
-    func createTemporaryDirectory() -> URL {
-        let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
-        try? FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
-        return tempDir
-    }
-    
-    /// Helper method to cleanup temporary files
-    func cleanupTemporaryDirectory(_ url: URL) {
-        try? FileManager.default.removeItem(at: url)
-    }
-} 
