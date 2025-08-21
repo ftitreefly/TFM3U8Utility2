@@ -68,7 +68,7 @@ final class CombineTests: XCTestCase, @unchecked Sendable {
         
         // Create segments directory
         let segmentsDirectory = tempDirectory.appendingPathComponent("segments")
-        try fileSystem.createDirectory(at: segmentsDirectory.path(), withIntermediateDirectories: true)
+        try fileSystem.createDirectory(at: segmentsDirectory, withIntermediateDirectories: true)
         
         // Download segments
         try await httpSystem.downloadSegments(

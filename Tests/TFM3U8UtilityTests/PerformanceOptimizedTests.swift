@@ -72,11 +72,11 @@ final class PerformanceOptimizedTests: XCTestCase {
         do {
             // Test temporary directory creation
             let tempDir = try fileSystem.createTemporaryDirectory(nil)
-            XCTAssertTrue(fileSystem.fileExists(at: tempDir.path))
+            XCTAssertTrue(fileSystem.fileExists(at: tempDir))
             
             // Clean up
-            try fileSystem.removeItem(at: tempDir.path)
-            XCTAssertFalse(fileSystem.fileExists(at: tempDir.path))
+            try fileSystem.removeItem(at: tempDir)
+            XCTAssertFalse(fileSystem.fileExists(at: tempDir))
             
             expectation.fulfill()
         } catch {

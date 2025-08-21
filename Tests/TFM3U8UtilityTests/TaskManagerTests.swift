@@ -113,7 +113,7 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
             let request = TaskRequest(
                 url: url,
                 baseUrl: nil,
-                savedDirectory: tempDirectory.path,
+                savedDirectory: tempDirectory,
                 fileName: "test.mp4",
                 method: .web,
                 verbose: false
@@ -142,7 +142,7 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
             let request = TaskRequest(
                 url: localM3U8Path,
                 baseUrl: nil,
-                savedDirectory: tempDirectory.path,
+                savedDirectory: tempDirectory,
                 fileName: "test.mp4",
                 method: .local,
                 verbose: false
@@ -208,7 +208,7 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
                 let request = TaskRequest(
                     url: url1,
                     baseUrl: nil,
-                    savedDirectory: self.tempDirectory.path,
+                    savedDirectory: self.tempDirectory,
                     fileName: "test1.mp4",
                     method: .web,
                     verbose: false
@@ -224,7 +224,7 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
                 let request = TaskRequest(
                     url: url2,
                     baseUrl: nil,
-                    savedDirectory: self.tempDirectory.path,
+                    savedDirectory: self.tempDirectory,
                     fileName: "test2.mp4",
                     method: .web,
                     verbose: false
@@ -243,7 +243,7 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
             let request = TaskRequest(
                 url: url3,
                 baseUrl: nil,
-                savedDirectory: tempDirectory.path,
+                savedDirectory: tempDirectory,
                 fileName: "test3.mp4",
                 method: .web,
                 verbose: false
@@ -274,7 +274,7 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
             let request = TaskRequest(
                 url: url,
                 baseUrl: nil,
-                savedDirectory: tempDirectory.path,
+                savedDirectory: tempDirectory,
                 fileName: "test.mp4",
                 method: .web,
                 verbose: false
@@ -301,7 +301,7 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
             let request = TaskRequest(
                 url: url,
                 baseUrl: nil,
-                savedDirectory: tempDirectory.path,
+                savedDirectory: tempDirectory,
                 fileName: "test.mp4",
                 method: .web,
                 verbose: false
@@ -329,7 +329,7 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
             let request = TaskRequest(
                 url: url,
                 baseUrl: nil,
-                savedDirectory: tempDirectory.path,
+                savedDirectory: tempDirectory,
                 fileName: "test.mp4",
                 method: .web,
                 verbose: false
@@ -358,7 +358,7 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
             let request = TaskRequest(
                 url: url,
                 baseUrl: nil,
-                savedDirectory: tempDirectory.path,
+                savedDirectory: tempDirectory,
                 fileName: "test.mp4",
                 method: .web,
                 verbose: false
@@ -397,7 +397,7 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
             let request = TaskRequest(
                 url: url,
                 baseUrl: nil,
-                savedDirectory: tempDirectory.path,
+                savedDirectory: tempDirectory,
                 fileName: "test.mp4",
                 method: .web,
                 verbose: false
@@ -586,19 +586,19 @@ final class MockFileSystem: FileSystemServiceProtocol, @unchecked Sendable {
     var removeItemCalled = false
     var copyItemCalled = false
     
-    func createDirectory(at path: String, withIntermediateDirectories: Bool) throws {
+    func createDirectory(at url: URL, withIntermediateDirectories: Bool) throws {
         createDirectoryCalled = true
         
         if !mockDirectoryExists {
-            throw FileSystemError.writePermissionDenied(path)
+            throw FileSystemError.writePermissionDenied(url.path)
         }
     }
     
-    func fileExists(at path: String) -> Bool {
+    func fileExists(at url: URL) -> Bool {
         return mockFileExists
     }
     
-    func removeItem(at path: String) throws {
+    func removeItem(at url: URL) throws {
         removeItemCalled = true
     }
     
@@ -607,10 +607,10 @@ final class MockFileSystem: FileSystemServiceProtocol, @unchecked Sendable {
         return mockTempDirectory
     }
     
-    func content(atPath path: String) throws -> String {
+    func content(at url: URL) throws -> String {
         // Return the actual file content if it exists, otherwise return mock content
-        if FileManager.default.fileExists(atPath: path) {
-            let data = try Data(contentsOf: URL(fileURLWithPath: path))
+        if FileManager.default.fileExists(atPath: url.path) {
+            let data = try Data(contentsOf: url)
             return String(data: data, encoding: .utf8) ?? ""
         } else {
             // Return mock M3U8 content for testing

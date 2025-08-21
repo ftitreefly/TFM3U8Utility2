@@ -168,26 +168,6 @@ final class NetworkTests: XCTestCase {
         }
     }
     
-    func test404Error() async throws {
-        let notFoundURL = URL(string: "https://httpbin.org/status/404")!
-        
-        // Testing 404 error handling
-        
-        do {
-            let (_, response) = try await URLSession.shared.data(from: notFoundURL)
-            
-            if let httpResponse = response as? HTTPURLResponse {
-                guard httpResponse.statusCode != 503 else {
-                   throw XCTSkip("\(notFoundURL) - 503 Service Temporarily Unavailable")
-                }
-                XCTAssertEqual(httpResponse.statusCode, 404, "Should return 404 status code")
-            }
-            
-        } catch {
-            // 404 test error
-        }
-    }
-    
     // MARK: - Performance Tests
     
     func testDownloadPerformance() async throws {

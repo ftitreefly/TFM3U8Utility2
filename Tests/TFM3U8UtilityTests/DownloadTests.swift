@@ -227,7 +227,7 @@ final class DownloadTests: XCTestCase {
             try content.write(to: outputFile, atomically: true, encoding: .utf8)
             
             // Verify file
-            XCTAssertTrue(fileSystem.fileExists(at: outputFile.path), "File should exist")
+            XCTAssertTrue(fileSystem.fileExists(at: outputFile), "File should exist")
             
             let savedContent = try String(contentsOf: outputFile)
             XCTAssertEqual(content, savedContent, "Saved content should match downloaded content")
