@@ -146,6 +146,15 @@ public final class DependencyContainer: Sendable {
             let config = try! self.resolve(DIConfiguration.self)
             return DefaultNetworkClient(configuration: config)
         }
+        registerSingleton(LoggerProtocol.self) {
+            struct StaticLogger: LoggerProtocol {
+                func error(_ message: String, category: LogCategory) { Logger.error(message, category: category) }
+                func info(_ message: String, category: LogCategory) { Logger.info(message, category: category) }
+                func debug(_ message: String, category: LogCategory) { Logger.debug(message, category: category) }
+                func verbose(_ message: String, category: LogCategory) { Logger.verbose(message, category: category) }
+            }
+            return StaticLogger()
+        }
         
         register(M3U8DownloaderProtocol.self) { [weak self] in
             guard let self = self else {

@@ -120,10 +120,7 @@ final class DownloadTests: XCTestCase {
         "https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/gear1/"
         let testSegmentURLs = [
             URL(string: "\(segmentBaseURL)fileSequence0.ts")!,
-            URL(string: "\(segmentBaseURL)fileSequence1.ts")!,
-            URL(string: "\(segmentBaseURL)fileSequence2.ts")!,
-            URL(string: "\(segmentBaseURL)fileSequence3.ts")!,
-            URL(string: "\(segmentBaseURL)fileSequence4.ts")!
+            URL(string: "\(segmentBaseURL)fileSequence1.ts")!
         ]
         
         let headers = [

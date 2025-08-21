@@ -176,7 +176,7 @@ public struct LoggerConfiguration: Sendable {
 /// // Conditional logging
 /// Logger.verbose("Detailed debug info", category: .parsing)
 /// ```
-public actor Logger {
+public actor Logger: LoggerProtocol {
     /// The current configuration for the logger
     private static var configuration: LoggerConfiguration = .development()
     
@@ -195,6 +195,19 @@ public actor Logger {
     public static func configure(_ config: LoggerConfiguration) {
         configuration = config
         isConfigured = true
+    }
+
+    nonisolated public func error(_ message: String, category: LogCategory) {
+        Logger.error(message, category: category)
+    }
+    nonisolated public func info(_ message: String, category: LogCategory) {
+        Logger.info(message, category: category)
+    }
+    nonisolated public func debug(_ message: String, category: LogCategory) {
+        Logger.debug(message, category: category)
+    }
+    nonisolated public func verbose(_ message: String, category: LogCategory) {
+        Logger.verbose(message, category: category)
     }
     
     /// Log a message at the error level

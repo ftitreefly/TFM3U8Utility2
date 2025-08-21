@@ -649,6 +649,14 @@ public protocol NetworkClientProtocol: Sendable {
     func data(for request: URLRequest) async throws -> (Data, URLResponse)
 }
 
+/// Protocol for logging
+public protocol LoggerProtocol: Sendable {
+    func error(_ message: String, category: LogCategory)
+    func info(_ message: String, category: LogCategory)
+    func debug(_ message: String, category: LogCategory)
+    func verbose(_ message: String, category: LogCategory)
+}
+
 /// Protocol for providing well-known filesystem paths
 ///
 /// Provides platform-aware standard directories used by the application.
