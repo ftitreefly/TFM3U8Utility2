@@ -643,6 +643,12 @@ public protocol JavaScriptExecutorProtocol: Sendable {
     func createContext(url: URL, cookies: [String: String]?, headers: [String: String]?) -> JavaScriptContext
 }
 
+/// Protocol for basic HTTP networking
+public protocol NetworkClientProtocol: Sendable {
+    /// Perform a request and return data and response
+    func data(for request: URLRequest) async throws -> (Data, URLResponse)
+}
+
 /// Protocol for providing well-known filesystem paths
 ///
 /// Provides platform-aware standard directories used by the application.

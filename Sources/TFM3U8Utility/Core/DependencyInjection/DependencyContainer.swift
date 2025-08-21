@@ -141,6 +141,11 @@ public final class DependencyContainer: Sendable {
         registerSingleton(FileSystemServiceProtocol.self) { DefaultFileSystemService() }
         registerSingleton(PathProviderProtocol.self) { DefaultFileSystemService() }
         registerSingleton(CommandExecutorProtocol.self) { DefaultCommandExecutor() }
+        registerSingleton(NetworkClientProtocol.self) { [weak self] in
+            guard let self else { return DefaultNetworkClient(configuration: .performanceOptimized()) }
+            let config = try! self.resolve(DIConfiguration.self)
+            return DefaultNetworkClient(configuration: config)
+        }
         
         register(M3U8DownloaderProtocol.self) { [weak self] in
             guard let self = self else {
@@ -148,9 +153,11 @@ public final class DependencyContainer: Sendable {
             }
             let commandExecutor = try! self.resolve(CommandExecutorProtocol.self)
             let configuration = try! self.resolve(DIConfiguration.self)
+            let net = try! self.resolve(NetworkClientProtocol.self)
             return OptimizedM3U8Downloader(
                 commandExecutor: commandExecutor,
-                configuration: configuration
+                configuration: configuration,
+                networkClient: net
             )
         }
         
@@ -178,7 +185,8 @@ public final class DependencyContainer: Sendable {
                 processor: try! self.resolve(VideoProcessorProtocol.self),
                 fileSystem: try! self.resolve(FileSystemServiceProtocol.self),
                 configuration: try! self.resolve(DIConfiguration.self),
-                maxConcurrentTasks: (try! self.resolve(DIConfiguration.self)).maxConcurrentDownloads / 4
+                maxConcurrentTasks: (try! self.resolve(DIConfiguration.self)).maxConcurrentDownloads / 4,
+                networkClient: try! self.resolve(NetworkClientProtocol.self)
             )
         }
     }

@@ -88,7 +88,8 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
             processor: mockProcessor,
             fileSystem: mockFileSystem,
             configuration: testConfiguration,
-            maxConcurrentTasks: 2
+            maxConcurrentTasks: 2,
+            networkClient: DefaultNetworkClient(configuration: testConfiguration)
         )
     }
     

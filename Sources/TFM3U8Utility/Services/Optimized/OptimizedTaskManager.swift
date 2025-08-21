@@ -141,6 +141,9 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
     /// Configuration settings for task execution
     private let configuration: DIConfiguration
     
+    /// Network client for HTTP operations
+    private let networkClient: NetworkClientProtocol
+    
     /// Temporary directory for processing files
     private var tempDir: URL = FileManager.default.temporaryDirectory
     
@@ -178,7 +181,8 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
         processor: VideoProcessorProtocol,
         fileSystem: FileSystemServiceProtocol,
         configuration: DIConfiguration = .performanceOptimized(),
-        maxConcurrentTasks: Int = 3
+        maxConcurrentTasks: Int = 3,
+        networkClient: NetworkClientProtocol
     ) {
         self.downloader = downloader
         self.parser = parser
@@ -186,6 +190,7 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
         self.fileSystem = fileSystem
         self.configuration = configuration
         self.maxConcurrentTasks = maxConcurrentTasks
+        self.networkClient = networkClient
     }
     
     /// Creates and executes a new download task
@@ -614,7 +619,7 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
             request.setValue(value, forHTTPHeaderField: key)
         }
         
-        let (data, response) = try await downloaderSession().data(for: request)
+        let (data, response) = try await networkClient.data(for: request)
         
         guard let httpResponse = response as? HTTPURLResponse,
               httpResponse.statusCode == 200 else {
@@ -630,16 +635,7 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
     }
 
     /// Build a reusable URLSession for segment downloads.
-    private func downloaderSession() -> URLSession {
-        let cfg = URLSessionConfiguration.default
-        cfg.waitsForConnectivity = true
-        cfg.httpMaximumConnectionsPerHost = max(6, configuration.maxConcurrentDownloads)
-        cfg.timeoutIntervalForRequest = configuration.downloadTimeout
-        cfg.timeoutIntervalForResource = configuration.resourceTimeout
-        cfg.httpAdditionalHeaders = configuration.defaultHeaders
-        cfg.requestCachePolicy = .reloadIgnoringLocalCacheData
-        return URLSession(configuration: cfg)
-    }
+    
 }
 
 // MARK: - Performance Metrics

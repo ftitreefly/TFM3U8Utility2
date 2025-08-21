@@ -13,16 +13,20 @@ import Foundation
 public struct OptimizedM3U8Downloader: M3U8DownloaderProtocol {
     private let commandExecutor: CommandExecutorProtocol
     private let configuration: DIConfiguration
-    private let session: URLSession
+    private let networkClient: NetworkClientProtocol
     
     /// Initializes a new downloader
     /// - Parameters:
     ///   - commandExecutor: Executor for shell tools (e.g., ffmpeg) if needed
     ///   - configuration: DI configuration providing headers, timeouts, etc.
-    public init(commandExecutor: CommandExecutorProtocol, configuration: DIConfiguration) {
+    public init(commandExecutor: CommandExecutorProtocol, configuration: DIConfiguration, networkClient: NetworkClientProtocol? = nil) {
         self.commandExecutor = commandExecutor
         self.configuration = configuration
-        self.session = OptimizedM3U8Downloader.makeSession(configuration: configuration)
+        if let client = networkClient {
+            self.networkClient = client
+        } else {
+            self.networkClient = DefaultNetworkClient(configuration: configuration)
+        }
     }
     
     /// Downloads textual M3U8 content from the given URL
@@ -41,7 +45,7 @@ public struct OptimizedM3U8Downloader: M3U8DownloaderProtocol {
         for (key, value) in configuration.defaultHeaders {
             request.setValue(value, forHTTPHeaderField: key)
         }
-        let (data, response) = try await session.data(for: request)
+        let (data, response) = try await networkClient.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse,
               httpResponse.statusCode == 200 else {
             throw NetworkError.serverError(url, statusCode: (response as? HTTPURLResponse)?.statusCode ?? 0)
@@ -104,7 +108,7 @@ public struct OptimizedM3U8Downloader: M3U8DownloaderProtocol {
             request.setValue(value, forHTTPHeaderField: key)
         }
         
-        let (data, response) = try await session.data(for: request)
+        let (data, response) = try await networkClient.data(for: request)
         
         guard let httpResponse = response as? HTTPURLResponse,
               httpResponse.statusCode == 200 else {
@@ -117,19 +121,5 @@ public struct OptimizedM3U8Downloader: M3U8DownloaderProtocol {
         try data.write(to: fileURL, options: .atomic)
     }
 
-    // MARK: - Session Factory
-
-    /// Build a reusable URLSession for downloader tasks.
-    /// - Parameter configuration: DI configuration
-    /// - Returns: Configured URLSession instance
-    private static func makeSession(configuration: DIConfiguration) -> URLSession {
-        let cfg = URLSessionConfiguration.default
-        cfg.waitsForConnectivity = true
-        cfg.httpMaximumConnectionsPerHost = max(6, configuration.maxConcurrentDownloads)
-        cfg.timeoutIntervalForRequest = configuration.downloadTimeout
-        cfg.timeoutIntervalForResource = max(configuration.downloadTimeout * 2, configuration.downloadTimeout + 30)
-        cfg.httpAdditionalHeaders = configuration.defaultHeaders
-        cfg.requestCachePolicy = .reloadIgnoringLocalCacheData
-        return URLSession(configuration: cfg)
-    }
+    
 } 

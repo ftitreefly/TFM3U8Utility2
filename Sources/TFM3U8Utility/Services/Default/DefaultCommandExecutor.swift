@@ -227,6 +227,34 @@ public struct DefaultCommandExecutor: CommandExecutorProtocol {
   }
 }
 
+// MARK: - Default Network Client
+
+public struct DefaultNetworkClient: NetworkClientProtocol {
+    private let session: URLSession
+    private let defaultHeaders: [String: String]
+    
+    public init(configuration: DIConfiguration) {
+        let cfg = URLSessionConfiguration.default
+        cfg.waitsForConnectivity = true
+        cfg.httpMaximumConnectionsPerHost = max(6, configuration.maxConcurrentDownloads)
+        cfg.timeoutIntervalForRequest = configuration.downloadTimeout
+        cfg.timeoutIntervalForResource = configuration.resourceTimeout
+        cfg.httpAdditionalHeaders = configuration.defaultHeaders
+        cfg.requestCachePolicy = .reloadIgnoringLocalCacheData
+        self.session = URLSession(configuration: cfg)
+        self.defaultHeaders = configuration.defaultHeaders
+    }
+    
+    public func data(for request: URLRequest) async throws -> (Data, URLResponse) {
+        var req = request
+        // Ensure default headers are present
+        for (k, v) in defaultHeaders where req.value(forHTTPHeaderField: k) == nil {
+            req.setValue(v, forHTTPHeaderField: k)
+        }
+        return try await session.data(for: req)
+    }
+}
+
 // MARK: - Command Execution Errors
 
 /// Errors that can occur during command execution
