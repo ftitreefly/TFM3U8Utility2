@@ -232,6 +232,8 @@ public struct DefaultCommandExecutor: CommandExecutorProtocol {
 public struct DefaultNetworkClient: NetworkClientProtocol {
     private let session: URLSession
     private let defaultHeaders: [String: String]
+    private let retryAttempts: Int
+    private let retryBackoffBase: TimeInterval
     
     public init(configuration: DIConfiguration) {
         let cfg = URLSessionConfiguration.default
@@ -243,15 +245,30 @@ public struct DefaultNetworkClient: NetworkClientProtocol {
         cfg.requestCachePolicy = .reloadIgnoringLocalCacheData
         self.session = URLSession(configuration: cfg)
         self.defaultHeaders = configuration.defaultHeaders
+        self.retryAttempts = configuration.retryAttempts
+        self.retryBackoffBase = configuration.retryBackoffBase
     }
     
     public func data(for request: URLRequest) async throws -> (Data, URLResponse) {
         var req = request
-        // Ensure default headers are present
         for (k, v) in defaultHeaders where req.value(forHTTPHeaderField: k) == nil {
             req.setValue(v, forHTTPHeaderField: k)
         }
-        return try await session.data(for: req)
+        var lastError: Error?
+        for attempt in 0...retryAttempts {
+            do {
+                return try await session.data(for: req)
+            } catch {
+                lastError = error
+                if attempt < retryAttempts {
+                    let delay = retryBackoffBase * pow(2, Double(attempt))
+                    try? await Task.sleep(nanoseconds: UInt64(delay * 1_000_000_000))
+                    continue
+                }
+                throw error
+            }
+        }
+        throw lastError ?? URLError(.unknown)
     }
 }
 

@@ -45,6 +45,12 @@ public struct DIConfiguration: Sendable {
     /// Resource timeout in seconds for overall transfer operations
     public let resourceTimeout: TimeInterval
     
+    /// Maximum automatic retry attempts for transient network failures
+    public let retryAttempts: Int
+    
+    /// Base backoff (seconds) used for exponential retry delays
+    public let retryBackoffBase: TimeInterval
+    
     /// Initializes a new configuration instance
     /// 
     /// - Parameters:
@@ -59,7 +65,9 @@ public struct DIConfiguration: Sendable {
         defaultHeaders: [String: String] = ["User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"],
         maxConcurrentDownloads: Int = 16,
         downloadTimeout: TimeInterval = 300,
-        resourceTimeout: TimeInterval? = nil
+        resourceTimeout: TimeInterval? = nil,
+        retryAttempts: Int = 0,
+        retryBackoffBase: TimeInterval = 0.5
     ) {
         self.ffmpegPath = ffmpegPath
         self.curlPath = curlPath
@@ -67,6 +75,8 @@ public struct DIConfiguration: Sendable {
         self.maxConcurrentDownloads = maxConcurrentDownloads
         self.downloadTimeout = downloadTimeout
         self.resourceTimeout = resourceTimeout ?? downloadTimeout
+        self.retryAttempts = max(0, retryAttempts)
+        self.retryBackoffBase = max(0, retryBackoffBase)
     }
 }
 
@@ -109,7 +119,9 @@ extension DIConfiguration {
             ],
             maxConcurrentDownloads: 20,
             downloadTimeout: 60,
-            resourceTimeout: 120
+            resourceTimeout: 120,
+            retryAttempts: 2,
+            retryBackoffBase: 0.4
         )
     }
 }
