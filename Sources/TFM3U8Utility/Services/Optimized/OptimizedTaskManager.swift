@@ -25,7 +25,7 @@ public struct TaskInfo: Sendable {
     let baseUrl: URL?
     
     /// Directory where the final video file will be saved
-    let savedDirectory: String
+    let savedDirectory: URL
     
     /// Optional custom filename for the output video
     let fileName: String?
@@ -351,7 +351,6 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
     ///   - taskInfo: The task information to execute
     ///   - verbose: Whether to output detailed information
     private func executeTaskWithMetrics(taskInfo: inout TaskInfo, verbose: Bool = false) async throws {
-        _ = Date() // Mark start time for potential future metrics
         self.tempDir = try fileSystem.createTemporaryDirectory(taskInfo.url.absoluteString)
         
         logger.debug("Creating temporary directory: \(tempDir.path)", category: .fileSystem)
@@ -387,7 +386,7 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
         logger.debug("File saved to \(taskInfo.savedDirectory) | Size: \(formatBytes(taskInfo.metrics.totalBytes)) data", category: .fileSystem)
 
         // Step 5: Clean up
-        try fileSystem.removeItem(at: tempDir.path)
+        try fileSystem.removeItem(at: tempDir)
         logger.debug("Cleaned up temporary directory: \(tempDir.path)", category: .fileSystem)
     }
     
@@ -402,7 +401,7 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
     private func downloadAndParseContent(taskInfo: TaskInfo, verbose: Bool = false) async throws -> (String, URL) {
         if case .local = taskInfo.method {
             logger.debug("Reading from local file: \(taskInfo.url.path)", category: .fileSystem)
-            let content = try fileSystem.content(atPath: taskInfo.url.path)
+            let content = try fileSystem.content(at: taskInfo.url)
             let baseUrl = taskInfo.baseUrl ?? taskInfo.url.deletingLastPathComponent()
             return (content, baseUrl)
         } else {
@@ -471,13 +470,13 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
     ///   - verbose: Whether to output detailed information
     private func processCopyFile(_ taskInfo: TaskInfo) throws {
         let outputFileName = getOutputFileName(from: taskInfo.url, customName: taskInfo.fileName)
-        let outputPath = URL(fileURLWithPath: taskInfo.savedDirectory).appendingPathComponent(outputFileName)   
+        let outputPath = taskInfo.savedDirectory.appendingPathComponent(outputFileName)   
         let sizeInfo = formatBytes(taskInfo.metrics.totalBytes)
         
         let originalName = getOutputFileName(from: taskInfo.url, customName: nil)
         if FileManager.default.fileExists(atPath: outputPath.path) {
             let newFileName = outputFileName.replacingOccurrences(of: ".mp4", with: "_1.mp4")
-            let newOutputPath = URL(fileURLWithPath: taskInfo.savedDirectory).appendingPathComponent(newFileName)
+            let newOutputPath = taskInfo.savedDirectory.appendingPathComponent(newFileName)
             try? fileSystem.copyItem(at: tempDir.appendingPathComponent(originalName), to: newOutputPath)
             print("✅ File already exists, try to rename as \(newOutputPath.path) | Size: \(sizeInfo) data")
         } else {

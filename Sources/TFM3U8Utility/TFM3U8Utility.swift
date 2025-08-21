@@ -91,7 +91,7 @@ public struct TFM3U8Utility {
     public static func download(
         _ method: Method = .web,
         url: URL,
-        savedDirectory: String = "",
+        savedDirectory: URL?,
         name: String? = nil,
         configuration: DIConfiguration = DIConfiguration.performanceOptimized(),
         verbose: Bool = false
@@ -101,12 +101,12 @@ public struct TFM3U8Utility {
         Logger.configure(verbose ? .verbose() : .production())
         Logger.debug("Concurrent file downloads count: \(configuration.maxConcurrentDownloads), single file download timeout: \(configuration.downloadTimeout) seconds", category: .download)
 
-        let finalSavedDirectory: String
-        if savedDirectory.isEmpty {
+        let finalSavedDirectory: URL
+        if savedDirectory == nil {
             let paths = try await GlobalDependencies.shared.resolve(PathProviderProtocol.self)
             finalSavedDirectory = paths.downloadsDirectory()
         } else {
-            finalSavedDirectory = savedDirectory
+            finalSavedDirectory = savedDirectory!
         }
         
         let fileSystem = try await GlobalDependencies.shared.resolve(FileSystemServiceProtocol.self)
@@ -114,7 +114,7 @@ public struct TFM3U8Utility {
             do {
                 try fileSystem.createDirectory(at: finalSavedDirectory, withIntermediateDirectories: true)
             } catch {
-                throw FileSystemError.failedToCreateDirectory(finalSavedDirectory)
+                throw FileSystemError.failedToCreateDirectory(finalSavedDirectory.path)
             }
         }
         

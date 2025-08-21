@@ -88,17 +88,14 @@ struct DownloadCommand: AsyncParsableCommand {
     ///   - Various network and file system errors during download
     mutating func run() async throws {
 
-        // Resolve default output directory via PathProviderProtocol
-        let outputDirectory: String
+        let outputDirectory: URL
         do {
             let paths = try await GlobalDependencies.shared.resolve(PathProviderProtocol.self)
             outputDirectory = paths.downloadsDirectory()
         } catch {
-            // Fallback to home Downloads if DI not configured yet
-            outputDirectory = "\(NSHomeDirectory())/Downloads/"
+            outputDirectory = URL(fileURLWithPath: "\(NSHomeDirectory())/Downloads/")
         }
             
-        // Validate URL
         guard let downloadURL = URL(string: url) else {
             OutputFormatter.printError("Invalid URL format")
             throw ExitCode.failure

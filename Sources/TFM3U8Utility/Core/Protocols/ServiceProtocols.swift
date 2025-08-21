@@ -216,28 +216,28 @@ public protocol VideoProcessorProtocol: Sendable {
 /// }
 /// ```
 public protocol FileSystemServiceProtocol: Sendable {
-    /// Creates a directory at the specified path
+    /// Creates a directory at the specified URL
     /// 
     /// - Parameters:
-    ///   - path: The path where the directory should be created
+    ///   - url: The URL where the directory should be created
     ///   - withIntermediateDirectories: Whether to create intermediate directories
     /// 
     /// - Throws: `FileSystemError` if directory creation fails
-    func createDirectory(at path: String, withIntermediateDirectories: Bool) throws
+    func createDirectory(at url: URL, withIntermediateDirectories: Bool) throws
     
-    /// Checks if a file exists at the given path
+    /// Checks if a file exists at the given URL
     /// 
-    /// - Parameter path: The path to check
+    /// - Parameter url: The URL to check
     /// 
     /// - Returns: `true` if the file exists, `false` otherwise
-    func fileExists(at path: String) -> Bool
+    func fileExists(at url: URL) -> Bool
     
     /// Removes a file or directory from the file system
     /// 
-    /// - Parameter path: The path of the file or directory to remove
+    /// - Parameter url: The URL of the file or directory to remove
     /// 
     /// - Throws: `FileSystemError` if removal fails
-    func removeItem(at path: String) throws
+    func removeItem(at url: URL) throws
     
     /// Creates a temporary directory and returns its URL
     /// 
@@ -250,12 +250,12 @@ public protocol FileSystemServiceProtocol: Sendable {
   
     /// Returns the content of a file as a string
     /// 
-    /// - Parameter path: The path of the file to read
+    /// - Parameter url: The URL of the file to read
     /// 
     /// - Returns: The file content as a string
     /// 
     /// - Throws: `FileSystemError` if the file cannot be read
-    func content(atPath path: String) throws -> String
+    func content(at url: URL) throws -> String
 
     /// Returns the contents of a directory
     /// 
@@ -302,7 +302,7 @@ public struct TaskRequest: Sendable {
     public let baseUrl: URL?
     
     /// Directory where the final video file will be saved
-    public let savedDirectory: String
+    public let savedDirectory: URL
     
     /// Optional custom filename for the output video
     public let fileName: String?
@@ -325,7 +325,7 @@ public struct TaskRequest: Sendable {
     public init(
         url: URL,
         baseUrl: URL? = nil,
-        savedDirectory: String,
+        savedDirectory: URL,
         fileName: String? = nil,
         method: Method,
         verbose: Bool = false
@@ -663,7 +663,7 @@ public protocol LoggerProtocol: Sendable {
 /// Provides platform-aware standard directories used by the application.
 public protocol PathProviderProtocol: Sendable {
     /// Returns the user's Downloads directory path
-    func downloadsDirectory() -> String
+    func downloadsDirectory() -> URL
     /// Returns a temporary directory URL for ephemeral files
     func temporaryDirectory() -> URL
 }

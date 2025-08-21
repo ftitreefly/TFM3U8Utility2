@@ -13,23 +13,19 @@ public struct DefaultFileSystemService: FileSystemServiceProtocol, PathProviderP
     // Use FileManager.default directly instead of storing it
     public init() {}
     
-    public func createDirectory(at path: String, withIntermediateDirectories: Bool) throws {
-        let expandedPath = NSString(string: path).expandingTildeInPath
+    public func createDirectory(at url: URL, withIntermediateDirectories: Bool) throws {
         try FileManager.default.createDirectory(
-            atPath: expandedPath,
-            withIntermediateDirectories: withIntermediateDirectories,
-            attributes: nil
+            at: url,
+            withIntermediateDirectories: withIntermediateDirectories
         )
     }
     
-    public func fileExists(at path: String) -> Bool {
-        let expandedPath = NSString(string: path).expandingTildeInPath
-        return FileManager.default.fileExists(atPath: expandedPath)
+    public func fileExists(at url: URL) -> Bool {
+        return FileManager.default.fileExists(atPath: url.path)
     }
     
-    public func removeItem(at path: String) throws {
-        let expandedPath = NSString(string: path).expandingTildeInPath
-        try FileManager.default.removeItem(atPath: expandedPath)
+    public func removeItem(at url: URL) throws {
+        try FileManager.default.removeItem(at: url)
     }
     
     public func createTemporaryDirectory(_ saltString: String? = nil) throws -> URL {
@@ -39,11 +35,10 @@ public struct DefaultFileSystemService: FileSystemServiceProtocol, PathProviderP
         return tempDir
     }
 
-    public func content(atPath path: String) throws -> String {
-        let expandedPath = NSString(string: path).expandingTildeInPath
-        guard let data = FileManager.default.contents(atPath: expandedPath),
-              let content = String(data: data, encoding: .utf8) else {
-            throw FileSystemError.failedToReadFromFile(path)
+    public func content(at url: URL) throws -> String {
+        let data = try Data(contentsOf: url)
+        guard let content = String(data: data, encoding: .utf8) else {
+            throw FileSystemError.failedToReadFromFile(url.path)
         }
         return content
     }
@@ -57,9 +52,9 @@ public struct DefaultFileSystemService: FileSystemServiceProtocol, PathProviderP
     }
     
     // MARK: - PathProviderProtocol
-    public func downloadsDirectory() -> String {
+    public func downloadsDirectory() -> URL {
         let urls = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask)
-        return (urls.first ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Downloads")).path
+        return (urls.first ?? FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Downloads"))
     }
     
     public func temporaryDirectory() -> URL {
