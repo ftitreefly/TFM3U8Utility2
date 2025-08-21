@@ -18,47 +18,36 @@ final class CombineTests: XCTestCase, @unchecked Sendable {
     var videoSystem: VideoProcessorProtocol!
     var httpSystem: M3U8DownloaderProtocol!
 
-    override func setUp() {
-        super.setUp()
+    override func setUpWithError() throws {
         testContainer = DependencyContainer()
         testContainer.configure(with: DIConfiguration.performanceOptimized())
         
-        videoSystem = try! testContainer.resolve(VideoProcessorProtocol.self)
-        httpSystem = try! testContainer.resolve(M3U8DownloaderProtocol.self)
+        videoSystem = try testContainer.resolve(VideoProcessorProtocol.self)
+        httpSystem = try testContainer.resolve(M3U8DownloaderProtocol.self)
         
-        // Create temporary directory
-        fileSystem = try! testContainer.resolve(FileSystemServiceProtocol.self)
-        
-        do {
-            tempDirectory = try fileSystem.createTemporaryDirectory(nil)
-        } catch {
-            XCTFail("Failed to create temporary directory: \(error)")
-            return
-        }
-        
-        // Test temporary directory created
+        fileSystem = try testContainer.resolve(FileSystemServiceProtocol.self)
+        tempDirectory = try fileSystem.createTemporaryDirectory(nil)
     }
 
-    override func tearDown() {
-        // Clean up temporary directory
+    override func tearDownWithError() throws {
         if let tempDir = tempDirectory {
             try? FileManager.default.removeItem(at: tempDir)
         }
         
         testContainer = nil
-        super.tearDown()
     }
 
     // MARK: - Helper Methods
 
     /// Download test ts segments from network
     private func downloadTestSegments(count: Int = 3) async throws -> URL {
-        // Downloading \(count) test ts segments from network
+        guard await canReachAppleTestServer() else {
+            throw XCTSkip("Skipping: network not available or Apple test server unreachable")
+        }
         
-        // Use Apple's public test stream segments
         let segmentBaseURL = "https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/gear1/"
-        let testSegmentURLs = (0..<count).map { 
-            URL(string: "\(segmentBaseURL)fileSequence\($0).ts")! 
+        let testSegmentURLs = (0..<count).map {
+            URL(string: "\(segmentBaseURL)fileSequence\($0).ts")!
         }
         
         let headers = [
@@ -66,24 +55,81 @@ final class CombineTests: XCTestCase, @unchecked Sendable {
             "Accept": "*/*"
         ]
         
-        // Create segments directory
         let segmentsDirectory = tempDirectory.appendingPathComponent("segments")
         try fileSystem.createDirectory(at: segmentsDirectory, withIntermediateDirectories: true)
         
-        // Download segments
         try await httpSystem.downloadSegments(
-            at: testSegmentURLs, 
-            to: segmentsDirectory, 
+            at: testSegmentURLs,
+            to: segmentsDirectory,
             headers: headers
         )
         
-        // Verify downloaded files
         let files = try fileSystem.contentsOfDirectory(at: segmentsDirectory)
         XCTAssertGreaterThanOrEqual(files.count, count, "Should have downloaded at least \(count) files")
         
-        // Successfully downloaded \(files.count) ts segments
-        
         return segmentsDirectory
+    }
+
+    /// Check if ffmpeg is available in common locations or PATH
+    private func isFFmpegAvailable() -> Bool {
+        let env = ProcessInfo.processInfo.environment
+        if let explicit = env["FFMPEG_PATH"], FileManager.default.isExecutableFile(atPath: explicit) {
+            return true
+        }
+        let candidates = ["/opt/homebrew/bin/ffmpeg", "/usr/local/bin/ffmpeg", "/usr/bin/ffmpeg"]
+        if candidates.contains(where: { FileManager.default.isExecutableFile(atPath: $0) }) {
+            return true
+        }
+        let whichURL = URL(fileURLWithPath: "/usr/bin/which")
+        guard FileManager.default.isExecutableFile(atPath: whichURL.path) else { return false }
+        let process = Process()
+        let pipe = Pipe()
+        process.executableURL = whichURL
+        process.arguments = ["ffmpeg"]
+        process.standardOutput = pipe
+        process.standardError = Pipe()
+        do {
+            try process.run()
+            process.waitUntilExit()
+            let data = try pipe.fileHandleForReading.readToEnd() ?? Data()
+            let out = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            return !out.isEmpty && FileManager.default.isExecutableFile(atPath: out)
+        } catch {
+            return false
+        }
+    }
+
+    /// Quick reachability check for Apple's public test server
+    private func canReachAppleTestServer(timeoutSeconds: TimeInterval = 5) async -> Bool {
+        guard let url = URL(string: "https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/gear1/fileSequence0.ts") else {
+            return false
+        }
+        let config = URLSessionConfiguration.ephemeral
+        config.timeoutIntervalForRequest = timeoutSeconds
+        config.timeoutIntervalForResource = timeoutSeconds
+        let session = URLSession(configuration: config)
+        var request = URLRequest(url: url)
+        request.httpMethod = "HEAD"
+        do {
+            _ = try await session.data(for: request)
+            return true
+        } catch {
+            return false
+        }
+    }
+
+    /// Common helper to run a combine test for N segments
+    private func runCombineTest(segmentsCount: Int, outputName: String) async throws {
+        guard isFFmpegAvailable() else {
+            throw XCTSkip("Skipping combine test: FFmpeg may be unavailable")
+        }
+        let segmentsDirectory = try await downloadTestSegments(count: segmentsCount)
+        let outputFile = tempDirectory.appendingPathComponent(outputName)
+        try await videoSystem.combineSegments(in: segmentsDirectory, outputFile: outputFile)
+        XCTAssertTrue(FileManager.default.fileExists(atPath: outputFile.path), "Combined output file should exist")
+        let attributes = try FileManager.default.attributesOfItem(atPath: outputFile.path)
+        let fileSize = attributes[.size] as? UInt64 ?? 0
+        XCTAssertGreaterThan(fileSize, 0, "Output file size should be greater than 0")
     }
 
     // MARK: - OptimizedVideoProcessor Tests
@@ -103,83 +149,17 @@ final class CombineTests: XCTestCase, @unchecked Sendable {
 
     /// Test video segment combination functionality with 1 segment
     func testCombineSingleSegment() async throws {
-        // Starting single segment combination test
-
-        // Download 1 test segment
-        let segmentsDirectory = try await downloadTestSegments(count: 1)
-        let outputFile = tempDirectory.appendingPathComponent("combined_single.mp4")
-
-        // Test combination functionality
-        do {
-            try await videoSystem.combineSegments(in: segmentsDirectory, outputFile: outputFile)
-            
-            // Verify output file exists
-            XCTAssertTrue(FileManager.default.fileExists(atPath: outputFile.path), "Combined output file should exist")
-            
-            // Verify output file size
-            let attributes = try FileManager.default.attributesOfItem(atPath: outputFile.path)
-            let fileSize = attributes[.size] as? UInt64 ?? 0
-            XCTAssertGreaterThan(fileSize, 0, "Output file size should be greater than 0")
-            
-            // Single segment combination test passed
-        } catch {
-            // In environments without FFmpeg, this test may fail
-            throw XCTSkip("Skipping single segment combination test: FFmpeg may be unavailable")
-        }
+        try await runCombineTest(segmentsCount: 1, outputName: "combined_single.mp4")
     }
 
     /// Test video segment combination functionality with 2 segments
     func testCombineTwoSegments() async throws {
-        // Starting two segments combination test
-
-        // Download 2 test segments
-        let segmentsDirectory = try await downloadTestSegments(count: 2)
-        let outputFile = tempDirectory.appendingPathComponent("combined_two.mp4")
-
-        // Test combination functionality
-        do {
-            try await videoSystem.combineSegments(in: segmentsDirectory, outputFile: outputFile)
-            
-            // Verify output file exists
-            XCTAssertTrue(FileManager.default.fileExists(atPath: outputFile.path), "Combined output file should exist")
-            
-            // Verify output file size
-            let attributes = try FileManager.default.attributesOfItem(atPath: outputFile.path)
-            let fileSize = attributes[.size] as? UInt64 ?? 0
-            XCTAssertGreaterThan(fileSize, 0, "Output file size should be greater than 0")
-            
-            // Two segments combination test passed
-        } catch {
-            // In environments without FFmpeg, this test may fail
-            throw XCTSkip("Skipping two segments combination test: FFmpeg may be unavailable")
-        }
+        try await runCombineTest(segmentsCount: 2, outputName: "combined_two.mp4")
     }
 
     /// Test video segment combination functionality with 3 segments
     func testCombineThreeSegments() async throws {
-        // Starting three segments combination test
-
-        // Download 3 test segments
-        let segmentsDirectory = try await downloadTestSegments(count: 3)
-        let outputFile = tempDirectory.appendingPathComponent("combined_three.mp4")
-
-        // Test combination functionality
-        do {
-            try await videoSystem.combineSegments(in: segmentsDirectory, outputFile: outputFile)
-            
-            // Verify output file exists
-            XCTAssertTrue(FileManager.default.fileExists(atPath: outputFile.path), "Combined output file should exist")
-            
-            // Verify output file size
-            let attributes = try FileManager.default.attributesOfItem(atPath: outputFile.path)
-            let fileSize = attributes[.size] as? UInt64 ?? 0
-            XCTAssertGreaterThan(fileSize, 0, "Output file size should be greater than 0")
-            
-            // Three segments combination test passed
-        } catch {
-            // In environments without FFmpeg, this test may fail
-            throw XCTSkip("Skipping three segments combination test: FFmpeg may be unavailable")
-        }
+        try await runCombineTest(segmentsCount: 3, outputName: "combined_three.mp4")
     }
 
     /// Test error handling with empty directory
