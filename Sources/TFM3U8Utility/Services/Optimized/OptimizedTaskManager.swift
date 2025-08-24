@@ -260,7 +260,6 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
             completedTasks += 1
             totalDownloadTime += taskInfo.metrics.downloadDuration
             totalProcessingTime += taskInfo.metrics.processingDuration
-            
         } catch {
             taskInfo.status = TaskStatus.failed(error)
             tasks[taskId] = taskInfo
@@ -458,6 +457,8 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
             logger.debug("Combining video segments...", category: .processing)
             try await processor.combineSegments(in: tempDir, outputFile: outputPath)           
         }
+        
+        logger.debug("Video processing completed successfully", category: .processing)
     }
     
     /// Process the final copy of the file
@@ -619,22 +620,13 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
         }
         
         let (data, response) = try await networkClient.data(for: request)
-        
-        guard let httpResponse = response as? HTTPURLResponse,
-              httpResponse.statusCode == 200 else {
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
             throw NetworkError.serverError(url, statusCode: (response as? HTTPURLResponse)?.statusCode ?? 0)
         }
         
-        let filename = url.lastPathComponent
-        let fileURL = directory.appendingPathComponent(filename)
-        
-        try data.write(to: fileURL, options: .atomic)
-        
+        try data.write(to: directory.appendingPathComponent(url.lastPathComponent), options: .atomic)
         return Int64(data.count)
     }
-
-    /// Build a reusable URLSession for segment downloads.
-    
 }
 
 // MARK: - Performance Metrics
