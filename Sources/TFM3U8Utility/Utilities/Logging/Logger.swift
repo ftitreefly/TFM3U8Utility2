@@ -214,20 +214,20 @@ public struct Logger: LoggerProtocol {
         state.setConfig(config)
     }
 
-    nonisolated public func error(_ message: String, category: LogCategory) {
-        Logger.error(message, category: category)
+    nonisolated public func error(_ message: String, category: LogCategory, file: String, function: String, line: Int) {
+        Logger.log(.error, message: message, category: category, file: file, function: function, line: line)
     }
-    nonisolated public func info(_ message: String, category: LogCategory) {
-        Logger.info(message, category: category)
+    nonisolated public func info(_ message: String, category: LogCategory, file: String, function: String, line: Int) {
+        Logger.log(.info, message: message, category: category, file: file, function: function, line: line)
     }
-    nonisolated public func debug(_ message: String, category: LogCategory) {
-        Logger.debug(message, category: category)
+    nonisolated public func debug(_ message: String, category: LogCategory, file: String, function: String, line: Int) {
+        Logger.log(.debug, message: message, category: category, file: file, function: function, line: line)
     }
-    nonisolated public func verbose(_ message: String, category: LogCategory) {
-        Logger.verbose(message, category: category)
+    nonisolated public func verbose(_ message: String, category: LogCategory, file: String, function: String, line: Int) {
+        Logger.log(.verbose, message: message, category: category, file: file, function: function, line: line)
     }
-    nonisolated public func warning(_ message: String, category: LogCategory) {
-        Logger.warning(message, category: category)
+    nonisolated public func warning(_ message: String, category: LogCategory, file: String, function: String, line: Int) {
+        Logger.log(.info, message: "⚠️  \(message)", category: category, file: file, function: function, line: line)
     }
     
     /// Log a message at the error level
@@ -238,6 +238,7 @@ public struct Logger: LoggerProtocol {
     ///   - file: The source file (automatically captured)
     ///   - function: The source function (automatically captured)
     ///   - line: The source line number (automatically captured)
+    // Convenience overloads that capture call-site location for direct static usage
     public static func error(
         _ message: String,
         category: LogCategory = .general,
@@ -327,9 +328,12 @@ public struct Logger: LoggerProtocol {
     ///   - category: The category of the log message (defaults to .general)
     public static func success(
         _ message: String,
-        category: LogCategory = .general
+        category: LogCategory = .general,
+        file: String = #fileID,
+        function: String = #function,
+        line: Int = #line
     ) {
-        log(.info, message: "✅ \(message)", category: category)
+        log(.info, message: "✅ \(message)", category: category, file: file, function: function, line: line)
     }
     
     /// Log a warning message (info level with warning formatting)
@@ -339,9 +343,12 @@ public struct Logger: LoggerProtocol {
     ///   - category: The category of the log message (defaults to .general)
     public static func warning(
         _ message: String,
-        category: LogCategory = .general
+        category: LogCategory = .general,
+        file: String = #fileID,
+        function: String = #function,
+        line: Int = #line
     ) {
-        log(.info, message: "⚠️  \(message)", category: category)
+        log(.info, message: "⚠️  \(message)", category: category, file: file, function: function, line: line)
     }
     
     /// Log a progress message (info level with progress formatting)
@@ -351,9 +358,12 @@ public struct Logger: LoggerProtocol {
     ///   - category: The category of the log message (defaults to .general)
     public static func progress(
         _ message: String,
-        category: LogCategory = .general
+        category: LogCategory = .general,
+        file: String = #fileID,
+        function: String = #function,
+        line: Int = #line
     ) {
-        log(.info, message: "📊 \(message)", category: category)
+        log(.info, message: "📊 \(message)", category: category, file: file, function: function, line: line)
     }
     
     // MARK: - Private Methods
@@ -371,9 +381,9 @@ public struct Logger: LoggerProtocol {
         _ level: LogLevel,
         message: String,
         category: LogCategory = .general,
-        file: String = #file,
-        function: String = #function,
-        line: Int = #line
+        file: String,
+        function: String,
+        line: Int
     ) {
         // Snapshot configuration safely
         let cfg = state.getConfig()
@@ -517,9 +527,57 @@ public extension Logger {
 // Thin adapter to use static Logger via LoggerProtocol
 public struct LoggerAdapter: LoggerProtocol {
     public init() {}
-    public func error(_ message: String, category: LogCategory) { Logger.error(message, category: category) }
-    public func info(_ message: String, category: LogCategory) { Logger.info(message, category: category) }
-    public func debug(_ message: String, category: LogCategory) { Logger.debug(message, category: category) }
-    public func verbose(_ message: String, category: LogCategory) { Logger.verbose(message, category: category) }
-    public func warning(_ message: String, category: LogCategory) { Logger.warning(message, category: category) }
+    public func error(_ message: String, category: LogCategory, file: String, function: String, line: Int) { 
+        Logger.error(message, category: category, file: file, function: function, line: line) 
+    }
+    public func info(_ message: String, category: LogCategory, file: String, function: String, line: Int) { 
+        Logger.info(message, category: category, file: file, function: function, line: line) 
+    }
+    public func debug(_ message: String, category: LogCategory, file: String, function: String, line: Int) { 
+        Logger.debug(message, category: category, file: file, function: function, line: line) 
+    }
+    public func verbose(_ message: String, category: LogCategory, file: String, function: String, line: Int) { 
+        Logger.verbose(message, category: category, file: file, function: function, line: line) 
+    }
+    public func warning(_ message: String, category: LogCategory, file: String, function: String, line: Int) { 
+        Logger.warning(message, category: category, file: file, function: function, line: line) 
+    }
+}
+
+
+public extension LoggerProtocol {
+    func error(_ message: String, category: LogCategory, file: String = #fileID, function: String = #function, line: Int = #line) {
+        self.error(message, category: category, file: file, function: function, line: line)
+    }
+    func info(_ message: String, category: LogCategory, file: String = #fileID, function: String = #function, line: Int = #line) {
+        self.info(message, category: category, file: file, function: function, line: line)
+    }
+    func debug(_ message: String, category: LogCategory, file: String = #fileID, function: String = #function, line: Int = #line) {
+        self.debug(message, category: category, file: file, function: function, line: line)
+    }
+    func verbose(_ message: String, category: LogCategory, file: String = #fileID, function: String = #function, line: Int = #line) {
+        self.verbose(message, category: category, file: file, function: function, line: line)
+    }
+    func warning(_ message: String, category: LogCategory, file: String = #fileID, function: String = #function, line: Int = #line) {
+        self.warning(message, category: category, file: file, function: function, line: line)
+    }
+}
+
+// Convenience overloads so call sites can omit file/function/line and still capture them here.
+public extension LoggerProtocol {
+    func error(_ message: String, category: LogCategory) {
+        self.error(message, category: category, file: #fileID, function: #function, line: #line)
+    }
+    func info(_ message: String, category: LogCategory) {
+        self.info(message, category: category, file: #fileID, function: #function, line: #line)
+    }
+    func debug(_ message: String, category: LogCategory) {
+        self.debug(message, category: category, file: #fileID, function: #function, line: #line)
+    }
+    func verbose(_ message: String, category: LogCategory) {
+        self.verbose(message, category: category, file: #fileID, function: #function, line: #line)
+    }
+    func warning(_ message: String, category: LogCategory) {
+        self.warning(message, category: category, file: #fileID, function: #function, line: #line)
+    }
 }

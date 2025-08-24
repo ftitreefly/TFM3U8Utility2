@@ -651,11 +651,16 @@ public protocol NetworkClientProtocol: Sendable {
 
 /// Protocol for logging
 public protocol LoggerProtocol: Sendable {
-    func error(_ message: String, category: LogCategory)
-    func info(_ message: String, category: LogCategory)
-    func debug(_ message: String, category: LogCategory)
-    func verbose(_ message: String, category: LogCategory)
-    func warning(_ message: String, category: LogCategory)
+    /// Log a message at the error level with explicit source location
+    func error(_ message: String, category: LogCategory, file: String, function: String, line: Int)
+    /// Log a message at the info level with explicit source location
+    func info(_ message: String, category: LogCategory, file: String, function: String, line: Int)
+    /// Log a message at the debug level with explicit source location
+    func debug(_ message: String, category: LogCategory, file: String, function: String, line: Int)
+    /// Log a message at the verbose level with explicit source location
+    func verbose(_ message: String, category: LogCategory, file: String, function: String, line: Int)
+    /// Log a message at the warning level with explicit source location
+    func warning(_ message: String, category: LogCategory, file: String, function: String, line: Int)
 }
 
 /// Protocol for providing well-known filesystem paths
