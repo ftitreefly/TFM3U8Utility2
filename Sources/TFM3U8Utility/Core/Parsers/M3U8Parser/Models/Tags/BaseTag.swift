@@ -232,17 +232,3 @@ public enum TagCreation {
         }
     }
 }
-
-// MARK: - Legacy Support
-
-/// Legacy function for backward compatibility
-/// This should be replaced with proper error handling
-@available(*, deprecated, message: "Use TagCreation.createTag instead")
-public func createTagWithFallback<T: Tag>(_ type: T.Type, text: String, extraParams: [String: Any]? = nil) -> T? {
-    do {
-        return try TagCreation.createTag(type, text: text, extraParams: extraParams)
-    } catch {
-        print("Warning: Failed to create tag \(type.tag), error: \(error)")
-        return nil
-    }
-} 
