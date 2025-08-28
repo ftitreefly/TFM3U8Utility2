@@ -175,8 +175,7 @@ Sources/TFM3U8Utility/
 │   ├── Protocols/               # 协议定义
 │   └── Types/                   # 类型定义
 ├── Services/                    # 服务实现
-│   ├── Default/                 # 默认实现
-│   └── Optimized/               # 优化实现
+│   └── Default/                 # 默认实现（已合并原 Optimized 实现）
 └── Utilities/                   # 工具类
     ├── Debug.swift              # 调试工具
     ├── Errors/                  # 错误处理

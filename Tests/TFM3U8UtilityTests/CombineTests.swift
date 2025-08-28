@@ -132,19 +132,19 @@ final class CombineTests: XCTestCase, @unchecked Sendable {
         XCTAssertGreaterThan(fileSize, 0, "Output file size should be greater than 0")
     }
 
-    // MARK: - OptimizedVideoProcessor Tests
+    // MARK: - DefaultVideoProcessor Tests
 
-    /// Test OptimizedVideoProcessor basic functionality
-    func testOptimizedVideoProcessorBasicFunctionality() async throws {
+    /// Test DefaultVideoProcessor basic functionality
+    func testDefaultVideoProcessorBasicFunctionality() async throws {
         XCTAssertNotNil(videoSystem, "VideoProcessor should be properly resolved")
 
-        // Verify VideoProcessor is OptimizedVideoProcessor type
-        guard videoSystem is OptimizedVideoProcessor else {
-            XCTFail("VideoProcessor should be OptimizedVideoProcessor type")
+        // Verify VideoProcessor is DefaultVideoProcessor type
+        guard videoSystem is DefaultVideoProcessor else {
+            XCTFail("VideoProcessor should be DefaultVideoProcessor type")
             return
         }
 
-        // OptimizedVideoProcessor basic functionality verification passed
+        // DefaultVideoProcessor basic functionality verification passed
     }
 
     /// Test video segment combination functionality with 1 segment

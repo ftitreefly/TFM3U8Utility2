@@ -1,5 +1,5 @@
 //
-//  OptimizedTaskManager.swift
+//  DefaultTaskManager.swift
 //  TFM3U8Utility
 //
 //  Created by tree_fly on 2025/7/11.
@@ -7,7 +7,7 @@
 
 import Foundation
 
-// MARK: - Optimized Task Manager
+// MARK: - Default Task Manager
 
 /// Information about a download task including status and metrics
 /// 
@@ -85,7 +85,7 @@ public enum TaskStatus: Sendable {
     case cancelled
 }
 
-/// High-performance task manager using Swift 6 actor features for M3U8 download management
+/// Default task manager using Swift 6 actor features for M3U8 download management
 /// 
 /// This actor provides a thread-safe, high-performance task management system for
 /// downloading and processing M3U8 video files. It uses Swift 6 concurrency features
@@ -101,7 +101,7 @@ public enum TaskStatus: Sendable {
 /// 
 /// ## Usage Example
 /// ```swift
-/// let taskManager = OptimizedTaskManager(
+/// let taskManager = DefaultTaskManager(
 ///     downloader: downloader,
 ///     parser: parser,
 ///     processor: processor,
@@ -112,11 +112,14 @@ public enum TaskStatus: Sendable {
 /// 
 /// // Create and execute a download task
 /// try await taskManager.createTask(
-///     url: m3u8URL,
-///     baseUrl: nil,
-///     savedDirectory: "/path/to/save",
-///     fileName: "my-video",
-///     method: .web
+///     TaskRequest(
+///         url: m3u8URL,
+///         baseUrl: nil,
+///         savedDirectory: "/path/to/save",
+///         fileName: "my-video",
+///         method: .web,
+///         verbose: true
+///     )
 /// )
 /// 
 /// // Check task status
@@ -125,7 +128,7 @@ public enum TaskStatus: Sendable {
 /// // Get performance metrics
 /// let metrics = await taskManager.getPerformanceMetrics()
 /// ```
-public actor OptimizedTaskManager: TaskManagerProtocol {
+public actor DefaultTaskManager: TaskManagerProtocol {
     /// The downloader service for fetching M3U8 content
     private let downloader: M3U8DownloaderProtocol
     
@@ -169,7 +172,7 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
     /// Number of tasks that have completed successfully
     private var completedTasks: Int = 0
     
-    /// Initializes a new optimized task manager
+    /// Initializes a new default task manager
     /// 
     /// - Parameters:
     ///   - downloader: Service for downloading M3U8 content
@@ -211,19 +214,6 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
     ///   - `ProcessingError` with various codes for different failure scenarios
     ///   - `NetworkError` if network requests fail
     ///   - `FileSystemError` if file operations fail
-    /// 
-    /// ## Usage Example
-    /// ```swift
-    /// let request = TaskRequest(
-    ///     url: URL(string: "https://example.com/video.m3u8")!,
-    ///     baseUrl: nil,
-    ///     savedDirectory: "/Users/username/Downloads/",
-    ///     fileName: "my-video",
-    ///     method: .web,
-    ///     verbose: true
-    /// )
-    /// try await taskManager.createTask(request)
-    /// ```
     public func createTask(_ request: TaskRequest) async throws {
         guard activeTasksCount < maxConcurrentTasks else {
             throw ProcessingError.operationCancelled("Maximum concurrent tasks reached")
@@ -270,7 +260,7 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
                 throw ProcessingError(
                     code: 4999,
                     underlyingError: error,
-                    message: "Optimized task execution failed",
+                    message: "Default task execution failed",
                     operation: "task execution"
                 )
             }
@@ -339,7 +329,7 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
     }
     
     // MARK: - Private Methods
-
+    
     /// Execute a task with metrics tracking
     /// 
     /// This method executes a task and tracks its performance metrics,
@@ -353,14 +343,14 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
         self.tempDir = try fileSystem.createTemporaryDirectory(taskInfo.url.absoluteString)
         
         logger.debug("Creating temporary directory: \(tempDir.path)", category: .fileSystem)
-
+        
         // Step 1: Download and parse M3U8
         let downloadStartTime = Date()
         let (content, effectiveBaseUrl) = try await downloadAndParseContent(taskInfo: taskInfo, verbose: verbose)
         guard !content.isEmpty else {
             throw ProcessingError.emptyContent()
         }
-
+        
         // Step 2: Parse playlist
         let parseResult = try parser.parseContent(content, baseURL: effectiveBaseUrl, type: .media)
         
@@ -383,7 +373,7 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
         // Step 4: Copy file
         try processCopyFile(taskInfo)
         logger.debug("File saved to \(taskInfo.savedDirectory) | Size: \(formatBytes(taskInfo.metrics.totalBytes)) data", category: .fileSystem)
-
+        
         // Step 5: Clean up
         try fileSystem.removeItem(at: tempDir)
         logger.debug("Cleaned up temporary directory: \(tempDir.path)", category: .fileSystem)
@@ -407,13 +397,13 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
             logger.debug("Downloading from network: \(taskInfo.url.absoluteString)", category: .network)
             let content = try await downloader.downloadContent(from: taskInfo.url)
             let baseUrl = taskInfo.baseUrl ?? taskInfo.url.deletingLastPathComponent()
-
+            
             // save content to local file in temp directory
             let localM3U8FileName = "file.m3u8"
             let localM3U8File = tempDir.appendingPathComponent(localM3U8FileName)
             try content.write(to: localM3U8File, atomically: true, encoding: .utf8)
             logger.debug("M3U8 content saved to \(localM3U8File.path)", category: .fileSystem)
-
+            
             return (content, baseUrl)
         }
     }
@@ -446,7 +436,7 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
         // Calculate and display total bytes processed
         taskInfo.metrics.totalBytes = try await calculateTotalBytes(in: tempDir)
         logger.debug("Total processed: \(formatBytes(taskInfo.metrics.totalBytes)) data", category: .download)
-
+        
         // Combine segments
         let outputPath = tempDir.appendingPathComponent(getOutputFileName(from: taskInfo.url, customName: nil))
         // check if m3u8 file is encrypted
@@ -485,7 +475,7 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
             print("✅ File saved as \(outputPath.path) | Size: \(sizeInfo) data")
         }
     }
-
+    
     /// Calculate the total bytes of all files in a directory
     /// 
     /// This method calculates the total size of all files in a given directory,
@@ -570,7 +560,7 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
                 // Calculate progress metrics
                 let elapsedTime = Date().timeIntervalSince(downloadStartTime)
                 let downloadSpeed = elapsedTime > 0 ? Double(totalDownloadedBytes) / elapsedTime : 0
-
+                
                 // Display real-time progress
                 displayProgress(
                     completed: completedSegments,
@@ -604,13 +594,6 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
     ///   - directory: The directory to write the downloaded segment to
     ///   - config: The configuration to use for the download
     /// - Returns: The number of bytes downloaded
-    /// - Throws: 
-    /// Download a single segment and return its byte size.
-    /// - Parameters:
-    ///   - url: Segment URL
-    ///   - directory: Destination directory
-    ///   - config: DI configuration (headers, timeouts)
-    /// - Returns: Downloaded byte count
     private func downloadSingleSegmentWithProgress(url: URL, to directory: URL, config: DIConfiguration) async throws -> Int64 {
         var request = URLRequest(url: url, timeoutInterval: config.downloadTimeout)
         
@@ -628,7 +611,7 @@ public actor OptimizedTaskManager: TaskManagerProtocol {
         return Int64(data.count)
     }
 }
-
+ 
 // MARK: - Performance Metrics
 
 public struct PerformanceMetrics: Sendable {
@@ -670,3 +653,5 @@ public extension PerformanceMetrics {
         }
     }
 }
+
+

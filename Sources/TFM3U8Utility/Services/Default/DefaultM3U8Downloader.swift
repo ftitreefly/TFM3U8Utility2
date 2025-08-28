@@ -1,20 +1,19 @@
 //
-//  OptimizedM3U8Downloader.swift
+//  DefaultM3U8Downloader.swift
 //  TFM3U8Utility
 //
 //  Created by tree_fly on 2025/7/13.
 //
-
 import Foundation
 
-// MARK: - Performance-Optimized M3U8 Downloader
+// MARK: - Default M3U8 Downloader
 
 /// High-performance M3U8 downloader using Swift 6 features
 /// 
 /// This downloader wraps a lightweight networking client and provides
 /// efficient helpers for fetching playlists and segments with bounded
 /// concurrency. It respects the headers and timeouts from `DIConfiguration`.
-public struct OptimizedM3U8Downloader: M3U8DownloaderProtocol {
+public struct DefaultM3U8Downloader: M3U8DownloaderProtocol {
     private let commandExecutor: CommandExecutorProtocol
     private let configuration: DIConfiguration
     private let networkClient: NetworkClientProtocol
@@ -133,4 +132,6 @@ public struct OptimizedM3U8Downloader: M3U8DownloaderProtocol {
         
         try data.write(to: fileURL, options: .atomic)
     }
-} 
+}
+
+

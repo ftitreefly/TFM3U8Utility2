@@ -105,7 +105,7 @@ Logger.progress("下载进度: 75%", category: .download)
 ### 在任务管理器中使用
 
 ```swift
-// 在 OptimizedTaskManager 中
+// 在 DefaultTaskManager 中
 Logger.debug("当前活动任务: \(activeTasksCount)/\(maxConcurrentTasks)", category: .taskManager)
 Logger.info("创建临时目录: \(tempDir.path)", category: .fileSystem)
 Logger.progress("已处理: \(formatBytes(totalBytes)) 数据", category: .download)

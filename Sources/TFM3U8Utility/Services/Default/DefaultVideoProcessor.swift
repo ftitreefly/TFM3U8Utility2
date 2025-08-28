@@ -1,5 +1,5 @@
 //
-//  OptimizedVideoProcessor.swift
+//  DefaultVideoProcessor.swift
 //  TFM3U8Utility
 //
 //  Created by tree_fly on 2025/7/13.
@@ -7,7 +7,7 @@
 
 import Foundation
 
-// MARK: - Optimized Video Processor
+// MARK: - Default Video Processor
 
 /// High-performance video processor using Swift 6 features for M3U8 segment processing
 /// 
@@ -28,7 +28,7 @@ import Foundation
 /// 
 /// ## Usage Example
 /// ```swift
-/// let processor = OptimizedVideoProcessor(
+/// let processor = DefaultVideoProcessor(
 ///     commandExecutor: commandExecutor,
 ///     configuration: configuration
 /// )
@@ -46,14 +46,14 @@ import Foundation
 ///     keyURL: decryptionKeyURL
 /// )
 /// ```
-public struct OptimizedVideoProcessor: VideoProcessorProtocol {
+public struct DefaultVideoProcessor: VideoProcessorProtocol {
     /// The command executor for running FFmpeg operations
     private let commandExecutor: CommandExecutorProtocol
     
     /// Configuration settings for video processing
     private let configuration: DIConfiguration
     
-    /// Initializes a new optimized video processor
+    /// Initializes a new default video processor
     /// 
     /// - Parameters:
     ///   - commandExecutor: The command executor for running external commands
@@ -81,22 +81,11 @@ public struct OptimizedVideoProcessor: VideoProcessorProtocol {
     ///   - `ProcessingError` with code 4007 if no segment files are found
     ///   - `FileSystemError` if file operations fail
     ///   - `CommandExecutionError` if FFmpeg execution fails
-    /// 
-    /// ## Usage Example
-    /// ```swift
-    /// let segmentsDir = URL(fileURLWithPath: "/path/to/segments/")
-    /// let outputVideo = URL(fileURLWithPath: "/path/to/output/video.mp4")
-    /// 
-    /// try await processor.combineSegments(
-    ///     in: segmentsDir,
-    ///     outputFile: outputVideo
-    /// )
-    /// ```
     public func combineSegments(in directory: URL, outputFile: URL) async throws {
         guard let ffmpegCommand = configuration.ffmpegPath else {
             throw ProcessingError.ffmpegNotFound()
         }
-
+        
         // Use concurrent file processing
         let segmentFiles = try await findSegmentFiles(in: directory)
         
@@ -109,7 +98,7 @@ public struct OptimizedVideoProcessor: VideoProcessorProtocol {
         
         // Use FFmpeg with optimized parameters
         let arguments = buildConcatSegmentsFFmpegArguments(concatFile: concatFile, outputFile: outputFile)
-
+        
         _ = try await commandExecutor.execute(
             command: ffmpegCommand,
             arguments: arguments,
@@ -132,19 +121,6 @@ public struct OptimizedVideoProcessor: VideoProcessorProtocol {
     ///   - `FileSystemError` if file operations fail
     ///   - `CommandExecutionError` if FFmpeg execution fails
     ///   - `ProcessingError` if decryption fails
-    /// 
-    /// ## Usage Example
-    /// ```swift
-    /// let encryptedSegment = URL(fileURLWithPath: "/path/to/encrypted.ts")
-    /// let decryptedSegment = URL(fileURLWithPath: "/path/to/decrypted.ts")
-    /// let keyFile = URL(fileURLWithPath: "/path/to/key.key")
-    /// 
-    /// try await processor.decryptSegment(
-    ///     at: encryptedSegment,
-    ///     to: decryptedSegment,
-    ///     keyURL: keyFile
-    /// )
-    /// ```
     public func decryptSegment(at url: URL, to outputURL: URL, keyURL: URL?) async throws {
         guard let ffmpegCommand = configuration.ffmpegPath else {
             throw ProcessingError.ffmpegNotFound()
@@ -178,7 +154,7 @@ public struct OptimizedVideoProcessor: VideoProcessorProtocol {
             workingDirectory: outputURL.deletingLastPathComponent().path
         )
     }
-
+    
     /// Decrypts and combines video segments into a single output file
     /// 
     /// This method decrypts an encrypted video segment and saves it to the specified
@@ -194,24 +170,15 @@ public struct OptimizedVideoProcessor: VideoProcessorProtocol {
     ///   - `ProcessingError` with code 4007 if no segment files are found
     ///   - `FileSystemError` if file operations fail
     ///   - `CommandExecutionError` if FFmpeg execution fails
-    /// 
-    /// ## Usage Example
-    /// ```swift
-    /// let segmentsDir = URL(fileURLWithPath: "/path/to/segments/")
-    /// let localM3U8FileName = "file.m3u8"
-    /// let outputVideo = URL(fileURLWithPath: "/path/to/output/video.mp4")
-    /// 
-    /// try await processor.decryptAndCombineSegments(in: segmentsDir, with: localM3U8FileName, outputFile: outputVideo)
-    /// ```
     public func decryptAndCombineSegments(in directory: URL, with localM3U8FileName: String, outputFile: URL) async throws {
         guard let ffmpegCommand = configuration.ffmpegPath else {
             throw ProcessingError.ffmpegNotFound()
         }
-
+        
         let m3u8File = directory.appendingPathComponent(localM3U8FileName)
-
+        
         let arguments = await buildDecryptAndCombineSegmentsFFmpegArguments(m3u8File: m3u8File, outputFile: outputFile)
-
+        
         _ = try await commandExecutor.execute(
             command: ffmpegCommand,
             arguments: arguments,
@@ -322,7 +289,7 @@ public struct OptimizedVideoProcessor: VideoProcessorProtocol {
         
         return arguments
     }
-
+    
     /// Builds optimized FFmpeg arguments for decrypting and combining video segments
     /// 
     /// This method creates an array of FFmpeg command-line arguments optimized
@@ -333,25 +300,17 @@ public struct OptimizedVideoProcessor: VideoProcessorProtocol {
     ///   - outputFile: The URL of the output video file
     /// 
     /// - Returns: An array of FFmpeg command-line arguments
-    /// 
-    /// ## Usage Example
-    /// ```swift
-    /// let m3u8File = URL(fileURLWithPath: "/path/to/m3u8/file.m3u8")
-    /// let outputFile = URL(fileURLWithPath: "/path/to/output/video.mp4")
-    /// 
-    /// let arguments = await buildDecryptAndCombineSegmentsFFmpegArguments(m3u8File: m3u8File, outputFile: outputFile)
-    /// ```
     private func buildDecryptAndCombineSegmentsFFmpegArguments(m3u8File: URL, outputFile: URL) async -> [String] {
         var arguments = [
             "-y", // Overwrite output file
             "-protocol_whitelist", "file,http,https,tcp,tls,crypto",
             "-allowed_extensions", "ALL"
         ]
-
+        
         if await checkHardwareAcceleration() {
             arguments.append(contentsOf: ["-hwaccel", "auto"])
         }
-
+        
         arguments.append(contentsOf: [
             "-i", m3u8File.path,
             "-c", "copy",
@@ -362,7 +321,7 @@ public struct OptimizedVideoProcessor: VideoProcessorProtocol {
 #if !DEBUG
         arguments.append(contentsOf: ["-v", "quiet", "-nostats"])
 #endif
-
+        
         return arguments
     }
     
@@ -389,4 +348,6 @@ public struct OptimizedVideoProcessor: VideoProcessorProtocol {
             return false
         }
     }
-} 
+}
+
+
