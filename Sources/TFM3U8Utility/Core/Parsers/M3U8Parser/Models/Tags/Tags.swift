@@ -159,13 +159,22 @@ public class EXT_X_KEY: BaseAttributedTag, @unchecked Sendable {
     }
     
     public required init(text: String, tagType: any Tag.Type, extraParams: [String: Any]?) throws {
+        // METHOD is required by spec. URI is required only when METHOD != NONE. IV is optional.
         let attributesExtraParams: [String: Any] = [
-            TagParamsKeys.attributesCount: 2,
+            TagParamsKeys.attributesCount: 1,
             TagParamsKeys.attributesSeperator: ",",
             TagParamsKeys.attributesExtrasToRemove: ["\""],
-            TagParamsKeys.attributesKeys: [EXT_X_KEY.methodAttributeKey, EXT_X_KEY.uriAttributeKey, EXT_X_KEY.ivAttributeKey]
+            TagParamsKeys.attributesKeys: [EXT_X_KEY.methodAttributeKey]
         ]
         try super.init(text: text, tagType: tagType, extraParams: attributesExtraParams)
+        // Conditional validation: when METHOD != NONE, URI must be provided
+        if self.method.uppercased() != "NONE" && self.attributes[EXT_X_KEY.uriAttributeKey] == nil {
+            throw ParsingError.invalidTag(
+                tagType.tag,
+                expected: "URI required when METHOD != NONE",
+                received: "missing URI"
+            )
+        }
     }
 }
 
