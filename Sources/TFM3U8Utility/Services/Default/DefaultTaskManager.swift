@@ -313,10 +313,10 @@ public actor DefaultTaskManager: TaskManagerProtocol {
     
     /// Helper to get output file name
     private func getOutputFileName(from url: URL, customName: String?) -> String {
-        let originalName = url.lastPathComponent.replacingOccurrences(of: ".m3u8", with: ".mp4")
-        var fileName = customName ?? originalName
-        if !fileName.hasSuffix(".mp4") { fileName += ".mp4" }
-        return fileName
+        guard let trimmedCustom = customName?.trimmingCharacters(in: .whitespacesAndNewlines), !trimmedCustom.isEmpty else {
+            return url.deletingPathExtension().lastPathComponent + ".mp4"
+        }
+        return URL(fileURLWithPath: trimmedCustom).pathExtension.isEmpty ? trimmedCustom + ".mp4" : trimmedCustom
     }
     
     /// Helper to format download progress display
@@ -466,7 +466,9 @@ public actor DefaultTaskManager: TaskManagerProtocol {
         
         let originalName = getOutputFileName(from: taskInfo.url, customName: nil)
         if FileManager.default.fileExists(atPath: outputPath.path) {
-            let newFileName = outputFileName.replacingOccurrences(of: ".mp4", with: "_1.mp4")
+            let ext = (outputFileName as NSString).pathExtension
+            let base = (outputFileName as NSString).deletingPathExtension
+            let newFileName = ext.isEmpty ? "\(base)_1" : "\(base)_1.\(ext)"
             let newOutputPath = taskInfo.savedDirectory.appendingPathComponent(newFileName)
             try? fileSystem.copyItem(at: tempDir.appendingPathComponent(originalName), to: newOutputPath)
             print("✅ File already exists, try to rename as \(newOutputPath.path) | Size: \(sizeInfo) data")
