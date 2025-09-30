@@ -29,5 +29,5 @@ struct M3U8Utility: AsyncParsableCommand {
 }
 
 enum CLI {
-    static let version = "1.3.1"
+    static let version = "1.4.0"
 }
