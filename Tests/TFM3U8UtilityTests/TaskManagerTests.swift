@@ -74,7 +74,7 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
             resourceTimeout: 1
         )
         
-        taskManager = OptimizedTaskManager(
+        taskManager = DefaultTaskManager(
             downloader: mockDownloader,
             parser: mockParser,
             processor: mockProcessor,
@@ -311,8 +311,8 @@ final class TaskManagerTests: XCTestCase, @unchecked Sendable {
         mockParser.mockParseResults[expectedContent] = .media(try createMockMediaPlaylist())
         mockFileSystem.mockTempDirectory = tempDirectory
         
-        guard let optimizedManager = taskManager as? OptimizedTaskManager else {
-            XCTFail("Should be OptimizedTaskManager")
+        guard let optimizedManager = taskManager as? DefaultTaskManager else {
+            XCTFail("Should be DefaultTaskManager")
             return
         }
         

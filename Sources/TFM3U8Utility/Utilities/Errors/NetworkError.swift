@@ -14,8 +14,11 @@ import Foundation
 /// ## Error Codes
 /// - 1001: Connection failed
 /// - 1002: Invalid URL
-/// - 1003: Server returned non-200 status
-/// - 1004: Invalid/unsupported response
+/// - 1003: Request timeout
+/// - 1004: Server error (5xx)
+/// - 1005: Client error (4xx)
+/// - 1006: Invalid/unsupported response
+/// - 1007: Unknown network error
 public struct NetworkError: TFM3U8Error {
     public let domain = "TFM3U8Utility.Network"
     public let code: Int
@@ -27,7 +30,11 @@ public struct NetworkError: TFM3U8Error {
         switch code {
         case 1001: return "Check your internet connection and try again."
         case 1002: return "Verify the URL is correct and accessible."
-        case 1003: return "The server may be temporarily unavailable. Try again later."
+        case 1003: return "The request timed out. Try again with a longer timeout or check your connection."
+        case 1004: return "The server is experiencing issues. This will be retried automatically."
+        case 1005: return "The request was invalid. Please check the URL and parameters."
+        case 1006: return "Received an invalid response from the server."
+        case 1007: return "An unknown network error occurred."
         default: return "Check network settings and retry the operation."
         }
     }
@@ -68,12 +75,33 @@ public struct NetworkError: TFM3U8Error {
         )
     }
     
-    /// HTTP server error for URL with status code
-    public static func serverError(_ url: URL, statusCode: Int) -> NetworkError {
+    /// Request timeout
+    public static func timeout(_ url: URL) -> NetworkError {
         NetworkError(
             code: 1003,
             underlyingError: nil,
+            message: "Request timeout for \(url.absoluteString)",
+            url: url
+        )
+    }
+    
+    /// HTTP server error (5xx) for URL with status code
+    public static func serverError(_ url: URL, statusCode: Int) -> NetworkError {
+        let code = (statusCode >= 500 && statusCode < 600) ? 1004 : 1006
+        return NetworkError(
+            code: code,
+            underlyingError: nil,
             message: "Server error \(statusCode) for \(url.absoluteString)",
+            url: url
+        )
+    }
+    
+    /// HTTP client error (4xx) for URL with status code
+    public static func clientError(_ url: URL, statusCode: Int) -> NetworkError {
+        NetworkError(
+            code: 1005,
+            underlyingError: nil,
+            message: "Client error \(statusCode) for \(url.absoluteString)",
             url: url
         )
     }
@@ -81,10 +109,20 @@ public struct NetworkError: TFM3U8Error {
     /// Invalid or unsupported response
     public static func invalidResponse(_ url: String) -> NetworkError {
         NetworkError(
-            code: 1004,
+            code: 1006,
             underlyingError: nil,
             message: "Invalid response from \(url)",
             url: URL(string: url)
+        )
+    }
+    
+    /// Unknown network error
+    public static func unknownError() -> NetworkError {
+        NetworkError(
+            code: 1007,
+            underlyingError: nil,
+            message: "Unknown network error occurred",
+            url: nil
         )
     }
 } 

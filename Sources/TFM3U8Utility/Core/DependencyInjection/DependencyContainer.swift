@@ -60,7 +60,7 @@ public final class DependencyContainer: Sendable {
     /// ## Usage Example
     /// ```swift
     /// container.register(M3U8DownloaderProtocol.self) {
-    ///     OptimizedM3U8Downloader(
+    ///     DefaultM3U8Downloader(
     ///         commandExecutor: commandExecutor,
     ///         configuration: configuration
     ///     )
@@ -153,7 +153,14 @@ public final class DependencyContainer: Sendable {
         registerSingleton(PathProviderProtocol.self) { DefaultFileSystemService() }
         registerSingleton(CommandExecutorProtocol.self) { DefaultCommandExecutor() }
         registerSingleton(NetworkClientProtocol.self) {
-            DefaultNetworkClient(configuration: configuration)
+            EnhancedNetworkClient(
+                configuration: configuration,
+                retryStrategy: ExponentialBackoffRetryStrategy(
+                    baseDelay: configuration.retryBackoffBase,
+                    maxAttempts: configuration.retryAttempts
+                ),
+                monitor: nil // Can be configured later for monitoring
+            )
         }
         registerSingleton(LoggerProtocol.self) { LoggerAdapter() }
         
@@ -168,7 +175,7 @@ public final class DependencyContainer: Sendable {
                 fatalError("Failed to resolve required dependencies for M3U8DownloaderProtocol. Ensure all services are properly configured.")
             }
             
-            return OptimizedM3U8Downloader(
+            return DefaultM3U8Downloader(
                 commandExecutor: commandExecutor,
                 configuration: configuration,
                 networkClient: net
@@ -187,7 +194,7 @@ public final class DependencyContainer: Sendable {
                 fatalError("Failed to resolve required dependencies for VideoProcessorProtocol. Ensure all services are properly configured.")
             }
             
-            return OptimizedVideoProcessor(
+            return DefaultVideoProcessor(
                 commandExecutor: commandExecutor,
                 configuration: configuration
             )
@@ -215,7 +222,7 @@ public final class DependencyContainer: Sendable {
                 fatalError("Failed to resolve required dependencies for TaskManagerProtocol. Ensure all services are properly configured.")
             }
             
-            return OptimizedTaskManager(
+            return DefaultTaskManager(
                 downloader: downloader,
                 parser: parser,
                 processor: processor,

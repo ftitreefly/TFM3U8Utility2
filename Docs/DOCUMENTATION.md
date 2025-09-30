@@ -85,7 +85,6 @@ TFM3U8Utility2/
 │   │   │   └── Types/            # 类型定义
 │   │   ├── Services/             # 服务实现
 │   │   │   ├── Default/          # 默认服务实现
-│   │   │   └── Optimized/        # 优化服务实现
 │   │   └── Utilities/            # 工具类
 │   │       ├── Debug.swift       # 调试工具
 │   │       ├── Errors/           # 错误处理
@@ -129,8 +128,7 @@ TFM3U8Utility2/
 #### 4. 服务层
 - **文件**: `Sources/TFM3U8Utility/Services/`
 - **组件**:
-  - `Default/`: 默认服务实现
-  - `Optimized/`: 优化服务实现
+  - `Default/`: 默认服务实现（包含原优化实现）
 - **服务类型**:
   - `M3U8DownloaderProtocol`: 内容下载
   - `M3U8ParserServiceProtocol`: 播放列表解析
