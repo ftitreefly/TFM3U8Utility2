@@ -5,6 +5,31 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2025-09-30
+
+### Added
+- **Enhanced Network Layer**: Intelligent retry mechanism with exponential backoff
+  - 4 retry strategies (exponential, linear, fixed, no-retry)
+  - Connection pooling with HTTP/2 support
+  - Automatic error detection and recovery
+
+- **Memory Optimization**: Streaming downloads and resource management
+  - StreamingDownloader with configurable 256KB buffer
+  - BatchStreamingDownloader for concurrent downloads
+
+### Changed
+- NetworkClientProtocol now uses EnhancedNetworkClient by default
+- Download operations automatically benefit from retry mechanism
+- Improved error codes and recovery suggestions (NetworkError 1003-1007)
+- DI container updated to configure enhanced network features
+
+### Performance Improvements
+
+### Fixed
+- Memory leaks in temporary resource management
+- Network timeout handling
+- Concurrent download stability
+
 ## [1.3.3] - 2025-08-22
 
 ### Added

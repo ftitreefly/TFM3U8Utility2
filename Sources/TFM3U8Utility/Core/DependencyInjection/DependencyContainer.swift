@@ -153,7 +153,14 @@ public final class DependencyContainer: Sendable {
         registerSingleton(PathProviderProtocol.self) { DefaultFileSystemService() }
         registerSingleton(CommandExecutorProtocol.self) { DefaultCommandExecutor() }
         registerSingleton(NetworkClientProtocol.self) {
-            DefaultNetworkClient(configuration: configuration)
+            EnhancedNetworkClient(
+                configuration: configuration,
+                retryStrategy: ExponentialBackoffRetryStrategy(
+                    baseDelay: configuration.retryBackoffBase,
+                    maxAttempts: configuration.retryAttempts
+                ),
+                monitor: nil // Can be configured later for monitoring
+            )
         }
         registerSingleton(LoggerProtocol.self) { LoggerAdapter() }
         

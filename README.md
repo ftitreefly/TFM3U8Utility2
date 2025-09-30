@@ -39,7 +39,7 @@ Add TFM3U8Utility2 to your project dependencies:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/ftitreefly/TFM3U8Utility2.git", from: "1.3.3")
+    .package(url: "https://github.com/ftitreefly/TFM3U8Utility2.git", from: "1.4.0")
 ]
 ```
 
